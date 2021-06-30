@@ -1,19 +1,26 @@
 <template>
   <main id="app" class="flex flex-col">
-    <div id="toolbar">
-      <button @click="prevSlide" class="btn btn-blue">Prev</button>
-      <button @click="nextSlide" class="btn btn-blue">Next</button>
-      <button @click="newSlide" class="btn btn-blue">New</button>
-      <p>{{ activeSlideIndex + 1 }} / {{ slides.length }}</p>
-      <input v-model="ratio" type="text" />
+    <div id="toolbar" class="grid grid-cols-3 gap-4">
+      <div class="col-span-1 flex flex-row items-center justify-start">
+        <button @click="prevSlide" class="btn">Prev</button>
+        <button @click="nextSlide" class="btn">Next</button>
+        <button @click="newSlide" class="btn">New</button>
+      </div>
+      <div class="col-span-1 flex flex-row items-center justify-center">
+        <div class="px-4"><input v-model="title" type="text" class="text-center border-b-2 border-black"/></div>
+      </div>
+      <div class="col-span-1 flex flex-row items-center justify-end">
+        <div class="px-4 w-auto">Ratio: <input v-model="ratio" type="text" class="appearance-none w-6 border-b-2 border-black" /></div>
+        <div class="px-4">Slide: {{ activeSlideIndex + 1 }} / {{ slides.length }}</div>
+      </div>
     </div>
-    <div id="workspace" class="flex-1 flex flex-row">
-      <div id="editor-pane" class="flex-1">
+    <div id="workspace" class="flex-1 grid grid-cols-2 gap-4">
+      <div id="editor-pane" class="p-4 col-span-1">
         <h1>Editor</h1>
         <hr />
         <div ref="editor"></div>
       </div>
-      <div id="preview-pane" class="flex-1">
+      <div id="preview-pane" class="p-4 col-span-1">
         <h1>Preview</h1>
         <button @click="toggleFullscreen" class="btn btn-blue">Fullscreen</button>
         <hr />
@@ -40,6 +47,7 @@ export default defineComponent({
     return {
       cm: null,
       ratio: "",
+      title: "Untitled",
       slides: [""],
       activeSlideIndex: 0,
     };
@@ -132,12 +140,10 @@ body,
 }
 
 .btn {
-  @apply font-bold py-2 px-4 rounded;
+  @apply font-semibold py-2 px-4 rounded hover:bg-gray-100;
 }
+
 .btn-blue {
-  @apply bg-blue-500 text-white;
-}
-.btn-blue:hover {
-  @apply bg-blue-700;
+  @apply bg-blue-500 text-white hover:bg-blue-700;
 }
 </style>
