@@ -78,7 +78,25 @@
               </li>
               <li>
                 <label class="mr-2">Theme:</label>
-                <select v-model="settings.theme" class="block appearance-none w-full bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 pr-8 rounded shadow leading-tight focus:outline-none focus:shadow-outline">
+                <select
+                  v-model="settings.theme"
+                  class="
+                    block
+                    appearance-none
+                    w-full
+                    bg-white
+                    border border-gray-400
+                    hover:border-gray-500
+                    px-4
+                    py-2
+                    pr-8
+                    rounded
+                    shadow
+                    leading-tight
+                    focus:outline-none
+                    focus:shadow-outline
+                  "
+                >
                   <option>default</option>
                 </select>
               </li>
@@ -139,6 +157,55 @@ import {
 
 import * as _ from "lodash";
 
+import hljs from "highlight.js";
+import "highlight.js/styles/github.css";
+import katex from "katex";
+import "katex/dist/katex.min.css"
+import "katex/dist/contrib/mhchem.min.js";
+
+let marked_render = new marked.Renderer();
+marked_render.old_paragraph = marked_render.paragraph;
+marked_render.paragraph = function (text) {
+  var isTeXInline = /\$(.*)\$/g.test(text);
+  var isTeXLine = /^\$\$(\s*.*\s*)\$\$$/.test(text);
+
+  if (!isTeXLine && isTeXInline) {
+    text = text.replace(/(\$([^\$]*)\$)+/g, function ($1, $2) {
+      // prevent conflict with code
+      if ($2.indexOf("<code>") >= 0 || $2.indexOf("</code>") >= 0) {
+        return $2;
+      } else {
+        let raw = $2.replace(/\$/g, "").replace(/[^\\](%)/g, (match)=>{return match[0] + '\\' + '%'});
+        var html = katex.renderToString(raw, { throwOnError: false, });
+        return html;
+      }
+    });
+  } else if (isTeXLine) {
+    let raw = text.replace(/\$/g, "").replace(/[^\\](%)/g, (match)=>{return match[0] + '\\' + '%'});
+    text = katex.renderToString(raw, { throwOnError: false, });
+  }
+  // apply old renderer
+  text = this.old_paragraph(text);
+  return text;
+};
+
+// Set options
+// `highlight` example uses https://highlightjs.org
+marked.setOptions({
+  renderer: marked_render,
+  highlight: function (code, lang) {
+    const language = hljs.getLanguage(lang) ? lang : "plaintext";
+    return hljs.highlight(code, { language }).value;
+  },
+  pedantic: false,
+  gfm: true,
+  breaks: false,
+  sanitize: false,
+  smartLists: true,
+  smartypants: false,
+  xhtml: false,
+});
+
 export default defineComponent({
   name: "App",
   components: {
@@ -170,7 +237,7 @@ export default defineComponent({
           key: "Alt-[",
           description: "Navigate to previous slide",
           run: (v: EditorView) => {
-            console.log('hi');
+            console.log("hi");
             this.prevSlide();
             return true;
           },
@@ -351,5 +418,4 @@ body,
 .btn-icon {
   @apply flex flex-row;
 }
-
 </style>
