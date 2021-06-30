@@ -2,8 +2,12 @@
   <main id="app" class="flex flex-col">
     <div id="toolbar" class="grid grid-cols-3 gap-4">
       <div class="col-span-1 flex flex-row items-center justify-start">
-        <button @click="exportSlides" class="btn">Export</button>
-        <button @click="showImportSlidesModal" class="btn">Import</button>
+        <button @click="exportSlides" class="btn btn-icon">
+          <DocumentDownloadIcon class="h-6 w-6"></DocumentDownloadIcon>Export
+        </button>
+        <button @click="showImportSlidesModal" class="btn btn-icon">
+          <UploadIcon class="h-6 w-6"></UploadIcon>Import
+        </button>
         <Modal v-show="importModalVisible" @close="closeImportSlidesModal">
           <template v-slot:header>Select a file</template>
           <template v-slot:body>
@@ -14,7 +18,7 @@
           </template>
         </Modal>
 
-        <button @click="showHelpModal" class="btn flex flex-row">
+        <button @click="showHelpModal" class="btn btn-icon">
           <InformationCircleIcon class="h-6 w-6"></InformationCircleIcon>Help
         </button>
         <Modal v-show="helpModalVisible" @close="closeHelpModal">
@@ -35,9 +39,10 @@
           </template>
         </Modal>
 
-        <button @click="prevSlide" class="btn">Prev</button>
+        <!-- To hide under dropdown menu -->
+        <!--<button @click="prevSlide" class="btn">Prev</button>
         <button @click="nextSlide" class="btn">Next</button>
-        <button @click="newSlide" class="btn">New</button>
+        <button @click="newSlide" class="btn">New</button>-->
       </div>
 
       <div class="col-span-1 flex flex-row items-center justify-center">
@@ -52,10 +57,10 @@
       </div>
 
       <div class="col-span-1 flex flex-row items-center justify-end">
-        <button @click="toggleFullscreen" class="btn flex flex-row">
+        <button @click="toggleFullscreen" class="btn btn-icon">
           <DesktopComputerIcon class="h-6 w-6"></DesktopComputerIcon>Present
         </button>
-        <button @click="showSettingsModal" class="btn flex flex-row">
+        <button @click="showSettingsModal" class="btn btn-icon">
           <CogIcon class="h-6 w-6"></CogIcon>Settings
         </button>
         <Modal v-show="settingsModalVisible" @close="closeSettingsModal">
@@ -83,15 +88,6 @@
             <button class="btn" @click="closeSettingsModal">All done!</button>
           </template>
         </Modal>
-        <!--<div class="px-4 w-auto">
-          Ratio:
-          <input
-            v-model="ratio"
-            :size="ratio.length"
-            type="text"
-            class="text-center border-b-2 border-black"
-          />
-        </div>-->
         <div class="px-4">
           Slide: {{ activeSlideIndex + 1 }} / {{ slides.length }}
         </div>
@@ -137,6 +133,8 @@ import {
   DesktopComputerIcon,
   CogIcon,
   InformationCircleIcon,
+  DocumentDownloadIcon,
+  UploadIcon,
 } from "@heroicons/vue/solid";
 
 import * as _ from "lodash";
@@ -147,6 +145,8 @@ export default defineComponent({
     DesktopComputerIcon,
     CogIcon,
     InformationCircleIcon,
+    DocumentDownloadIcon,
+    UploadIcon,
     Modal,
   },
   data() {
@@ -167,15 +167,16 @@ export default defineComponent({
 
       keybindings: [
         {
-          key: "Alt-PageUp",
+          key: "Alt-[",
           description: "Navigate to previous slide",
           run: (v: EditorView) => {
-            vm.prevSlide();
+            console.log('hi');
+            this.prevSlide();
             return true;
           },
         },
         {
-          key: "Alt-PageDown",
+          key: "Alt-]",
           description: "Navigate to next slide",
           run: (v: EditorView) => {
             this.nextSlide();
@@ -340,14 +341,15 @@ body,
 
 #preview {
   border: 2px solid black;
-  @apply bg-white;
+  @apply bg-white p-4;
 }
 
 .btn {
   @apply font-semibold py-2 px-4 rounded hover:bg-gray-100;
 }
 
-.btn-blue {
-  @apply bg-blue-500 text-white hover:bg-blue-700;
+.btn-icon {
+  @apply flex flex-row;
 }
+
 </style>
