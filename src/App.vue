@@ -352,7 +352,11 @@ export default defineComponent({
     },
 
     exportSlides() {
-      var blob = new Blob([JSON.stringify(this.slides)], {
+      let exportData = {
+        settings: this.settings,
+        slides: this.slides,
+      }
+      var blob = new Blob([JSON.stringify(exportData)], {
         type: "text/plain;charset=utf-8",
       });
       FileSaver.saveAs(blob, this.title + ".deal");
@@ -369,10 +373,14 @@ export default defineComponent({
     importSlides() {
       let vm = this;
       let f = this.$refs.importedSlides.files[0];
+      console.log(f);
 
       const reader = new FileReader();
       reader.addEventListener("load", (evt) => {
-        vm.slides = JSON.parse(evt.target.result);
+        let importData = JSON.parse(evt.target.result);
+        vm.title = f.name.replace(/\.deal$/, '');
+        vm.settings = importData.settings;
+        vm.slides = importData.slides;
       });
       reader.readAsText(f);
 
