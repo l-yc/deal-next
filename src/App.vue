@@ -15,9 +15,10 @@
       </div>
       <div id="preview-pane" class="flex-1">
         <h1>Preview</h1>
+        <button @click="toggleFullscreen" class="btn btn-blue">Fullscreen</button>
         <hr />
-        <div :style="ratioStyle">
-          <div id="preview" ref="preview" v-html="output"></div>
+        <div id="preview-wrapper" ref="previewWrapper" class="flex items-center justify-center">
+          <div id="preview" ref="preview" :style="ratioStyle" v-html="output"></div>
         </div>
       </div>
     </div>
@@ -38,7 +39,7 @@ export default defineComponent({
   data() {
     return {
       cm: null,
-      ratio: "4:3",
+      ratio: "",
       slides: [""],
       activeSlideIndex: 0,
     };
@@ -48,10 +49,10 @@ export default defineComponent({
       let x = this.ratio.split(":");
       let n = parseInt(x[1]),
         d = parseInt(x[0]);
-      return `position: relative; width: 100%; padding-bottom: ${(
-        (n / d) *
-        100
-      ).toString()}%`;
+
+      if (!this.$refs.preview) return '';
+      let w = '80vh';
+      return `width: ${w}; height: calc(${w} * ${n} / ${d});`;
     },
     output() {
       return DOMPurify.sanitize(marked(this.slides[this.activeSlideIndex]));
@@ -61,6 +62,7 @@ export default defineComponent({
   mounted() {
     let vm = this;
 
+    this.ratio = '4:3';
     this.cm = new EditorView({
       parent: <Element>this.$refs.editor,
       state: EditorState.create({
@@ -109,6 +111,10 @@ export default defineComponent({
     updateCurrentSlide(content: string) {
       this.slides[this.activeSlideIndex] = content;
     },
+
+    toggleFullscreen() {
+      this.$refs.previewWrapper.requestFullscreen();
+    },
   },
 });
 </script>
@@ -122,11 +128,7 @@ body,
 
 #preview {
   border: 2px solid black;
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  @apply bg-white;
 }
 
 .btn {
