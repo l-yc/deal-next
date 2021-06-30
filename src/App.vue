@@ -138,8 +138,15 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import * as _ from "lodash";
+
 import marked from "marked";
 import DOMPurify from "dompurify";
+import hljs from "highlight.js";
+import "highlight.js/styles/github.css";
+import katex from "katex";
+import "katex/dist/katex.min.css";
+import "katex/dist/contrib/mhchem.min.js";
 
 import { basicSetup, EditorState, EditorView } from "@codemirror/basic-setup";
 import { ViewUpdate, keymap } from "@codemirror/view";
@@ -155,34 +162,30 @@ import {
   UploadIcon,
 } from "@heroicons/vue/solid";
 
-import * as _ from "lodash";
-
-import hljs from "highlight.js";
-import "highlight.js/styles/github.css";
-import katex from "katex";
-import "katex/dist/katex.min.css"
-import "katex/dist/contrib/mhchem.min.js";
-
 let marked_render = new marked.Renderer();
 marked_render.old_paragraph = marked_render.paragraph;
-marked_render.paragraph = function (text) {
+marked_render.paragraph = function (text: string) {
   var isTeXInline = /\$(.*)\$/g.test(text);
   var isTeXLine = /^\$\$(\s*.*\s*)\$\$$/.test(text);
 
   if (!isTeXLine && isTeXInline) {
-    text = text.replace(/(\$([^\$]*)\$)+/g, function ($1, $2) {
+    text = text.replace(/(\$([^\$]*)\$)+/g, function (_$1: string, $2: string) {
       // prevent conflict with code
       if ($2.indexOf("<code>") >= 0 || $2.indexOf("</code>") >= 0) {
         return $2;
       } else {
-        let raw = $2.replace(/\$/g, "").replace(/[^\\](%)/g, (match)=>{return match[0] + '\\' + '%'});
-        var html = katex.renderToString(raw, { throwOnError: false, });
+        let raw = $2.replace(/\$/g, "").replace(/[^\\](%)/g, (match) => {
+          return match[0] + "\\" + "%";
+        });
+        var html = katex.renderToString(raw, { throwOnError: false });
         return html;
       }
     });
   } else if (isTeXLine) {
-    let raw = text.replace(/\$/g, "").replace(/[^\\](%)/g, (match)=>{return match[0] + '\\' + '%'});
-    text = katex.renderToString(raw, { throwOnError: false, });
+    let raw = text.replace(/\$/g, "").replace(/[^\\](%)/g, (match) => {
+      return match[0] + "\\" + "%";
+    });
+    text = katex.renderToString(raw, { throwOnError: false });
   }
   // apply old renderer
   text = this.old_paragraph(text);
@@ -193,7 +196,7 @@ marked_render.paragraph = function (text) {
 // `highlight` example uses https://highlightjs.org
 marked.setOptions({
   renderer: marked_render,
-  highlight: function (code, lang) {
+  highlight: function (code: string, lang: string) {
     const language = hljs.getLanguage(lang) ? lang : "plaintext";
     return hljs.highlight(code, { language }).value;
   },
@@ -348,14 +351,14 @@ export default defineComponent({
     },
 
     toggleFullscreen() {
-      this.$refs.previewWrapper.requestFullscreen();
+      (this.$refs.previewWrapper as HTMLElement).requestFullscreen();
     },
 
     exportSlides() {
       let exportData = {
         settings: this.settings,
         slides: this.slides,
-      }
+      };
       var blob = new Blob([JSON.stringify(exportData)], {
         type: "text/plain;charset=utf-8",
       });
@@ -372,13 +375,12 @@ export default defineComponent({
 
     importSlides() {
       let vm = this;
-      let f = this.$refs.importedSlides.files[0];
-      console.log(f);
+      let f = (this.$refs.importedSlides as HTMLInputElement).files[0];
 
       const reader = new FileReader();
       reader.addEventListener("load", (evt) => {
         let importData = JSON.parse(evt.target.result);
-        vm.title = f.name.replace(/\.deal$/, '');
+        vm.title = f.name.replace(/\.deal$/, "");
         vm.settings = importData.settings;
         vm.slides = importData.slides;
       });
