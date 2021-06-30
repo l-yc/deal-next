@@ -10,7 +10,25 @@
             <input ref="importedSlides" type="file" accept=".deal" />
           </template>
           <template v-slot:footer>
-            <button class="btn" @click="importSlides">Submit</button>
+            <button class="btn" @click="importSlides">Import</button>
+          </template>
+        </Modal>
+
+        <button @click="showHelpModal" class="btn flex flex-row">
+          <InformationCircleIcon class="h-6 w-6"></InformationCircleIcon>Help
+        </button>
+        <Modal v-show="helpModalVisible" @close="closeHelpModal">
+          <template v-slot:header>Help</template>
+          <template v-slot:body>
+            <ul>
+              <li v-for="kb in keybindings" :key="kb.key">
+                <pre class="inline rounded bg-gray-100 p-1 text-xs">{{ kb.key }}</pre>: 
+                {{ kb.description }}
+              </li>
+            </ul>
+          </template>
+          <template v-slot:footer>
+            <button class="btn" @click="closeHelpModal">Got it!</button>
           </template>
         </Modal>
 
@@ -23,6 +41,7 @@
         <div class="px-4">
           <input
             v-model="title"
+            :size="title.length"
             type="text"
             class="text-center border-b-2 border-black"
           />
@@ -33,14 +52,18 @@
         <button @click="toggleFullscreen" class="btn flex flex-row">
           <DesktopComputerIcon class="h-6 w-6"></DesktopComputerIcon>Present
         </button>
-        <div class="px-4 w-auto">
+        <button @click="showSettingsModal" class="btn flex flex-row">
+          <CogIcon class="h-6 w-6"></CogIcon>Settings
+        </button>
+        <!--<div class="px-4 w-auto">
           Ratio:
           <input
             v-model="ratio"
+            :size="ratio.length"
             type="text"
-            class="appearance-none w-6 border-b-2 border-black"
+            class="text-center border-b-2 border-black"
           />
-        </div>
+        </div>-->
         <div class="px-4">
           Slide: {{ activeSlideIndex + 1 }} / {{ slides.length }}
         </div>
@@ -82,12 +105,20 @@ import { ViewUpdate, keymap } from "@codemirror/view";
 import FileSaver from "file-saver";
 import Modal from "./components/Modal.vue";
 
-import { DesktopComputerIcon } from "@heroicons/vue/solid";
+import {
+  DesktopComputerIcon,
+  CogIcon,
+  InformationCircleIcon,
+} from "@heroicons/vue/solid";
+
+import * as _ from "lodash";
 
 export default defineComponent({
   name: "App",
   components: {
     DesktopComputerIcon,
+    CogIcon,
+    InformationCircleIcon,
     Modal,
   },
   data() {
@@ -99,6 +130,43 @@ export default defineComponent({
       activeSlideIndex: 0,
 
       importModalVisible: false,
+      helpModalVisible: false,
+      settingsModalVisible: false,
+
+      keybindings: [
+        {
+          key: "Alt-PageUp",
+          description: "Navigate to previous slide",
+          run: (v: EditorView) => {
+            vm.prevSlide();
+            return true;
+          },
+        },
+        {
+          key: "Alt-PageDown",
+          description: "Navigate to next slide",
+          run: (v: EditorView) => {
+            this.nextSlide();
+            return true;
+          },
+        },
+        {
+          key: "Alt-n",
+          description: "Create a new slide",
+          run: (v: EditorView) => {
+            this.newSlide();
+            return true;
+          },
+        },
+        {
+          key: "Alt-m",
+          description: "Duplicate current slide",
+          run: (v: EditorView) => {
+            this.duplicateSlide();
+            return true;
+          },
+        },
+      ],
     };
   },
 
@@ -135,6 +203,7 @@ export default defineComponent({
               vm.updateCurrentSlide(v.state.doc.toString());
             }
           }),
+          keymap.of(vm.keybindings),
         ],
       }),
     });
@@ -153,9 +222,14 @@ export default defineComponent({
       }
     },
 
-    newSlide() {
-      this.slides.push({ content: "", notes: "" });
+    newSlide(slide = { content: "", notes: "" }) {
+      this.slides.push(slide);
       this.loadSlide(this.slides.length - 1);
+    },
+
+    duplicateSlide() {
+      let dup = _.cloneDeep(this.activeSlide);
+      this.newSlide(dup);
     },
 
     loadSlide(slideNo: number) {
@@ -204,6 +278,14 @@ export default defineComponent({
 
       this.closeImportSlidesModal();
       this.loadSlide(0);
+    },
+
+    showHelpModal() {
+      this.helpModalVisible = true;
+    },
+
+    closeHelpModal() {
+      this.helpModalVisible = false;
     },
   },
 });
