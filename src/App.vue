@@ -22,7 +22,10 @@
           <template v-slot:body>
             <ul>
               <li v-for="kb in keybindings" :key="kb.key">
-                <pre class="inline rounded bg-gray-100 p-1 text-xs">{{ kb.key }}</pre>: 
+                <pre class="inline rounded bg-gray-100 p-1 text-xs">{{
+                  kb.key
+                }}</pre>
+                :
                 {{ kb.description }}
               </li>
             </ul>
@@ -55,6 +58,31 @@
         <button @click="showSettingsModal" class="btn flex flex-row">
           <CogIcon class="h-6 w-6"></CogIcon>Settings
         </button>
+        <Modal v-show="settingsModalVisible" @close="closeSettingsModal">
+          <template v-slot:header>Settings</template>
+          <template v-slot:body>
+            <ul>
+              <li>
+                <label class="mr-2">Ratio:</label>
+                <input
+                  v-model="settings.ratio"
+                  :size="settings.ratio.length"
+                  type="text"
+                  class="text-center border-b-2 border-black"
+                />
+              </li>
+              <li>
+                <label class="mr-2">Theme:</label>
+                <select v-model="settings.theme" class="block appearance-none w-full bg-white border border-gray-400 hover:border-gray-500 px-4 py-2 pr-8 rounded shadow leading-tight focus:outline-none focus:shadow-outline">
+                  <option>default</option>
+                </select>
+              </li>
+            </ul>
+          </template>
+          <template v-slot:footer>
+            <button class="btn" @click="closeSettingsModal">All done!</button>
+          </template>
+        </Modal>
         <!--<div class="px-4 w-auto">
           Ratio:
           <input
@@ -124,7 +152,6 @@ export default defineComponent({
   data() {
     return {
       cm: null,
-      ratio: "",
       title: "Untitled",
       slides: [{ content: "", notes: "" }],
       activeSlideIndex: 0,
@@ -132,6 +159,11 @@ export default defineComponent({
       importModalVisible: false,
       helpModalVisible: false,
       settingsModalVisible: false,
+
+      settings: {
+        ratio: "",
+        theme: "default",
+      },
 
       keybindings: [
         {
@@ -172,7 +204,7 @@ export default defineComponent({
 
   computed: {
     ratioStyle() {
-      let x = this.ratio.split(":");
+      let x = this.settings.ratio.split(":");
       let n = parseInt(x[1]),
         d = parseInt(x[0]);
 
@@ -191,7 +223,7 @@ export default defineComponent({
   mounted() {
     let vm = this;
 
-    this.ratio = "4:3";
+    this.settings.ratio = "4:3";
     this.cm = new EditorView({
       parent: <Element>this.$refs.editor,
       state: EditorState.create({
@@ -286,6 +318,14 @@ export default defineComponent({
 
     closeHelpModal() {
       this.helpModalVisible = false;
+    },
+
+    showSettingsModal() {
+      this.settingsModalVisible = true;
+    },
+
+    closeSettingsModal() {
+      this.settingsModalVisible = false;
     },
   },
 });
