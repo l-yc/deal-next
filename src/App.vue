@@ -156,6 +156,7 @@
 <script lang="ts">
 import { defineComponent } from "vue";
 import * as _ from "lodash";
+import { Slide } from "./types";
 
 import marked from "marked";
 import DOMPurify from "dompurify";
@@ -180,7 +181,7 @@ import {
 } from "@heroicons/vue/solid";
 
 let marked_render = new marked.Renderer();
-marked_render.old_paragraph = marked_render.paragraph;
+let old_paragraph = marked_render.paragraph;
 marked_render.paragraph = function (text: string) {
   var isTeXInline = /\$(.*)\$/g.test(text);
   var isTeXLine = /^\$\$(\s*.*\s*)\$\$$/.test(text);
@@ -205,7 +206,7 @@ marked_render.paragraph = function (text: string) {
     text = katex.renderToString(raw, { throwOnError: false });
   }
   // apply old renderer
-  text = this.old_paragraph(text);
+  text = old_paragraph(text);
   return text;
 };
 
@@ -237,8 +238,10 @@ export default defineComponent({
     Modal,
   },
   data() {
+    let vm = this;
+
     return {
-      cm: null,
+      cm: null as EditorView | null,
       title: "Untitled",
       slides: [{ content: "", notes: "" }],
       activeSlideIndex: 0,
@@ -294,7 +297,7 @@ export default defineComponent({
   },
 
   computed: {
-    ratioStyle() {
+    ratioStyle(): string {
       let x = this.settings.ratio.split(":");
       let n = parseInt(x[1]),
         d = parseInt(x[0]);
@@ -303,10 +306,10 @@ export default defineComponent({
       let w = "90vh";
       return `width: ${w}; height: calc(${w} * ${n} / ${d});`;
     },
-    activeSlide() {
+    activeSlide(): Slide {
       return this.slides[this.activeSlideIndex];
     },
-    output() {
+    output(): string {
       return DOMPurify.sanitize(marked(this.activeSlide.content));
     },
   },
@@ -331,9 +334,9 @@ export default defineComponent({
       }),
     });
 
-    document.onkeydown = function (event) {
-      event = event || window.event;
-      if (!event.target.matches('body')) return; // ignore code editor
+    document.onkeydown = function (event: KeyboardEvent) {
+      if (!event.target) return;
+      if (!(event.target as HTMLElement).matches('body')) return; // ignore key press in code editor
       switch (event.key) {
         case 'ArrowLeft':
         case 'ArrowUp':
@@ -375,7 +378,7 @@ export default defineComponent({
 
     loadSlide(slideNo: number) {
       this.activeSlideIndex = slideNo;
-      this.cm.dispatch({
+      this.cm?.dispatch({
         changes: {
           from: 0,
           to: this.cm.state.doc.length,
@@ -400,7 +403,7 @@ export default defineComponent({
       this.exportModalVisible = false;
     },
 
-    exportSlides(typ) {
+    exportSlides(typ: string) {
       if (typ === "deal") {
         let exportData = {
           settings: this.settings,
@@ -424,12 +427,12 @@ export default defineComponent({
 
         let stylesHtml = "";
         for (const node of [
-          ...document.querySelectorAll('link[rel="stylesheet"], style'),
+          ...Array.from(document.querySelectorAll('link[rel="stylesheet"], style')),
         ]) {
           stylesHtml += node.outerHTML;
         }
 
-        const WinPrint = window.open(
+        const WinPrint = <Window> window.open(
           "",
           "",
           "left=0,top=0,width=800,height=900,toolbar=0,scrollbars=0,status=0"
@@ -464,11 +467,17 @@ export default defineComponent({
 
     importSlides() {
       let vm = this;
-      let f = (this.$refs.importedSlides as HTMLInputElement).files[0];
+      let f = (this.$refs.importedSlides as HTMLInputElement)?.files?.[0];
+      if (!f) return;
 
       const reader = new FileReader();
       reader.addEventListener("load", (evt) => {
-        let importData = JSON.parse(evt.target.result);
+        if (!f || !evt.target || !evt.target.result) {
+          alert("Failed to import slides.");
+          return;
+        }
+
+        let importData = JSON.parse(evt.target.result as string);
         vm.title = f.name.replace(/\.deal$/, "");
         vm.settings = importData.settings;
         vm.slides = importData.slides;
