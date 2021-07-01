@@ -10,6 +10,7 @@
           <template v-slot:body>
             <button
               v-for="typ in exportTypes"
+              :key="typ"
               @click="exportSlides(typ)"
               class="btn"
             >
@@ -329,6 +330,24 @@ export default defineComponent({
         ],
       }),
     });
+
+    document.onkeydown = function (event) {
+      event = event || window.event;
+      if (!event.target.matches('body')) return; // ignore code editor
+      switch (event.key) {
+        case 'ArrowLeft':
+        case 'ArrowUp':
+          vm.prevSlide();
+          break;
+
+        case 'ArrowRight':
+        case 'ArrowDown':
+        case 'Spacebar':
+        case 'Enter':
+          vm.nextSlide();
+          break;
+      }
+    };
   },
 
   methods: {
@@ -395,8 +414,12 @@ export default defineComponent({
         //const prtHtml = this.$refs.preview.innerHTML;
         //return DOMPurify.sanitize(marked(this.activeSlide.content));
         const prtHtml = this.slides
-          .map((s) => `<div class="border-2 border-black" style="${this.ratioStyle}">
-          ${DOMPurify.sanitize(marked(s.content))}</div>`)
+          .map(
+            (s) => `<div class="border-2 border-black" style="${
+              this.ratioStyle
+            }">
+          ${DOMPurify.sanitize(marked(s.content))}</div>`
+          )
           .join("<footer></footer>");
 
         let stylesHtml = "";
