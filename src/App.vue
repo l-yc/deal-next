@@ -179,6 +179,7 @@ import {
   DocumentDownloadIcon,
   UploadIcon,
 } from "@heroicons/vue/solid";
+import { DOMEvent } from "codemirror";
 
 let marked_render = new marked.Renderer();
 let old_paragraph = marked_render.paragraph;
@@ -329,6 +330,26 @@ export default defineComponent({
               vm.updateCurrentSlide(v.state.doc.toString());
             }
           }),
+          EditorView.domEventHandlers({
+            paste(event: ClipboardEvent, v: EditorView) {
+              // @ts-ignore originalEvent for newer chrome version
+              let items = (event.clipboardData || event.originalEvent.clipboardData)?.items;
+              for (let index in items) {
+                let item = items[index];
+                if (item.kind === "file") {
+                  let blob = item.getAsFile();
+                  let reader = new FileReader();
+                  reader.onload = function (event: ProgressEvent<FileReader>) {
+                    if (!event.target) return;
+                    v.dispatch(v.state.replaceSelection(
+                      `<img src="${event.target.result}" />`
+                    ))
+                  }; // data url!
+                  reader.readAsDataURL(blob);
+                }
+              }
+            },
+          }),
           keymap.of(vm.keybindings),
         ],
       }),
@@ -336,17 +357,17 @@ export default defineComponent({
 
     document.onkeydown = function (event: KeyboardEvent) {
       if (!event.target) return;
-      if (!(event.target as HTMLElement).matches('body')) return; // ignore key press in code editor
+      if (!(event.target as HTMLElement).matches("body")) return; // ignore key press in code editor
       switch (event.key) {
-        case 'ArrowLeft':
-        case 'ArrowUp':
+        case "ArrowLeft":
+        case "ArrowUp":
           vm.prevSlide();
           break;
 
-        case 'ArrowRight':
-        case 'ArrowDown':
-        case 'Spacebar':
-        case 'Enter':
+        case "ArrowRight":
+        case "ArrowDown":
+        case "Spacebar":
+        case "Enter":
           vm.nextSlide();
           break;
       }
@@ -427,15 +448,19 @@ export default defineComponent({
 
         let stylesHtml = "";
         for (const node of [
-          ...Array.from(document.querySelectorAll('link[rel="stylesheet"], style')),
+          ...Array.from(
+            document.querySelectorAll('link[rel="stylesheet"], style')
+          ),
         ]) {
           stylesHtml += node.outerHTML;
         }
 
-        const WinPrint = <Window> window.open(
-          "",
-          "",
-          "left=0,top=0,width=800,height=900,toolbar=0,scrollbars=0,status=0"
+        const WinPrint = <Window>(
+          window.open(
+            "",
+            "",
+            "left=0,top=0,width=800,height=900,toolbar=0,scrollbars=0,status=0"
+          )
         );
 
         WinPrint.document.write(`<!DOCTYPE html>
