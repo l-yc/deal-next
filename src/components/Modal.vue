@@ -68,6 +68,8 @@ export default defineComponent({
   display: flex;
   justify-content: center;
   align-items: center;
+
+  z-index: 9001; /* over nine thousand! */
 }
 
 .modal {

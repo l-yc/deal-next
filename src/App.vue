@@ -2,9 +2,25 @@
   <main id="app" class="flex flex-col">
     <div id="toolbar" class="grid grid-cols-3 gap-4">
       <div class="col-span-1 flex flex-row items-center justify-start">
-        <button @click="exportSlides" class="btn btn-icon">
+        <button @click="showExportSlidesModal" class="btn btn-icon">
           <DocumentDownloadIcon class="h-6 w-6"></DocumentDownloadIcon>Export
         </button>
+        <Modal v-show="exportModalVisible" @close="closeExportSlidesModal">
+          <template v-slot:header>Select a file type</template>
+          <template v-slot:body>
+            <button
+              v-for="typ in exportTypes"
+              @click="exportSlides(typ)"
+              class="btn"
+            >
+              .{{ typ }}
+            </button>
+          </template>
+          <template v-slot:footer>
+            <button class="btn" @click="closeExportSlidesModal">Cancel</button>
+          </template>
+        </Modal>
+
         <button @click="showImportSlidesModal" class="btn btn-icon">
           <UploadIcon class="h-6 w-6"></UploadIcon>Import
         </button>
@@ -226,9 +242,12 @@ export default defineComponent({
       slides: [{ content: "", notes: "" }],
       activeSlideIndex: 0,
 
+      exportModalVisible: false,
       importModalVisible: false,
       helpModalVisible: false,
       settingsModalVisible: false,
+
+      exportTypes: ["deal", "pdf"],
 
       settings: {
         ratio: "",
@@ -354,15 +373,62 @@ export default defineComponent({
       (this.$refs.previewWrapper as HTMLElement).requestFullscreen();
     },
 
-    exportSlides() {
-      let exportData = {
-        settings: this.settings,
-        slides: this.slides,
-      };
-      var blob = new Blob([JSON.stringify(exportData)], {
-        type: "text/plain;charset=utf-8",
-      });
-      FileSaver.saveAs(blob, this.title + ".deal");
+    showExportSlidesModal() {
+      this.exportModalVisible = true;
+    },
+
+    closeExportSlidesModal() {
+      this.exportModalVisible = false;
+    },
+
+    exportSlides(typ) {
+      if (typ === "deal") {
+        let exportData = {
+          settings: this.settings,
+          slides: this.slides,
+        };
+        let blob = new Blob([JSON.stringify(exportData)], {
+          type: "text/plain;charset=utf-8",
+        });
+        FileSaver.saveAs(blob, this.title + ".deal");
+      } else if (typ == "pdf") {
+        //const prtHtml = this.$refs.preview.innerHTML;
+        //return DOMPurify.sanitize(marked(this.activeSlide.content));
+        const prtHtml = this.slides
+          .map((s) => `<div class="border-2 border-black" style="${this.ratioStyle}">
+          ${DOMPurify.sanitize(marked(s.content))}</div>`)
+          .join("<footer></footer>");
+
+        let stylesHtml = "";
+        for (const node of [
+          ...document.querySelectorAll('link[rel="stylesheet"], style'),
+        ]) {
+          stylesHtml += node.outerHTML;
+        }
+
+        const WinPrint = window.open(
+          "",
+          "",
+          "left=0,top=0,width=800,height=900,toolbar=0,scrollbars=0,status=0"
+        );
+
+        WinPrint.document.write(`<!DOCTYPE html>
+          <html>
+            <head>
+              ${stylesHtml}
+            </head>
+            <body>
+              ${prtHtml}
+            </body>
+          </html>`);
+
+        WinPrint.document.close();
+        WinPrint.focus();
+        WinPrint.print();
+        WinPrint.close();
+      } else {
+        alert("Error: unimplemented!");
+      }
     },
 
     showImportSlidesModal() {
@@ -383,11 +449,11 @@ export default defineComponent({
         vm.title = f.name.replace(/\.deal$/, "");
         vm.settings = importData.settings;
         vm.slides = importData.slides;
+
+        this.closeImportSlidesModal();
+        this.loadSlide(0);
       });
       reader.readAsText(f);
-
-      this.closeImportSlidesModal();
-      this.loadSlide(0);
     },
 
     showHelpModal() {
@@ -427,5 +493,11 @@ body,
 
 .btn-icon {
   @apply flex flex-row;
+}
+
+@media print {
+  footer {
+    page-break-after: always;
+  }
 }
 </style>
