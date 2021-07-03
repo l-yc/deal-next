@@ -217,7 +217,7 @@
   }
 
   function newSlide(slide = { content: "", notes: "" }) {
-    slides.push(slide);
+    slides = [...slides, slide];
     loadSlide(slides.length - 1);
   }
 
@@ -519,24 +519,12 @@
 </main>
 
 <style lang="postcss">
-  // from original index.css
-h1 {
-  @apply text-2xl;
-}
-h2 {
-  @apply text-xl;
-}
-h3 {
-  @apply text-lg;
-}
-
-// other stuff
-  html,
-  body,
-  #app {
-    height: 100%;
+  /* from original index.css */
+  h1 {
+    @apply text-2xl;
   }
 
+  /* other stuff */
   #preview {
     border: 2px solid black;
     @apply bg-white p-4;
@@ -550,6 +538,7 @@ h3 {
     @apply flex flex-row;
   }
 
+  /* FIXME: printing css is not working */
   @media print {
     footer {
       page-break-after: always;
