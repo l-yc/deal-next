@@ -84,6 +84,40 @@
   let slides = [{ content: "", notes: "" }];
   let activeSlideIndex = 0;
 
+  let themeDefault = `
+h1 {
+  font-size: 1.6rem;
+}
+
+li {
+  list-style: disc inside;
+}
+`;
+
+  let theme = {
+    default: themeDefault,
+  };
+
+  $: activeTheme = (() => {
+    let doc = document.implementation.createHTMLDocument(""),
+        styleElement = document.createElement("style");
+
+    styleElement.textContent = theme.default;
+    // the style will only be parsed once it is added to a document
+    doc.body.appendChild(styleElement);
+
+    let newStyle = '';
+    for (let rule of styleElement.sheet.cssRules) {
+      // @ts-ignore
+      rule.selectorText = '#preview ' + rule.selectorText;
+      newStyle += rule.cssText;
+    }
+
+    console.log('loading theme', newStyle);
+    // svelte-preprocess is trying to parse the style tag, so we split it up ???
+    return `<st` + `yle>${newStyle}<st` + `yle>`;
+  })();
+
   let exportModalVisible = false;
   let importModalVisible = false;
   let helpModalVisible = false;
@@ -319,7 +353,10 @@
 
   function importSlides() {
     let f = (importedSlides as HTMLInputElement)?.files?.[0];
-    if (!f) return;
+    if (!f) {
+      alert("No slides selected.");
+      return;
+    }
 
     const reader = new FileReader();
     reader.addEventListener("load", (evt) => {
@@ -500,6 +537,7 @@
     </div>
     <div id="preview-pane" class="p-4 col-span-1">
       <h1 class="mb-4">Preview</h1>
+      {@html activeTheme}
       <div
         id="preview-wrapper"
         bind:this={previewWrapper}
@@ -519,15 +557,9 @@
 </main>
 
 <style lang="postcss">
-  /* from original index.css */
+  /* app slides */
   h1 {
     @apply text-2xl;
-  }
-
-  /* other stuff */
-  #preview {
-    border: 2px solid black;
-    @apply bg-white p-4;
   }
 
   .btn {
@@ -536,6 +568,11 @@
 
   .btn-icon {
     @apply flex flex-row;
+  }
+
+  #preview {
+    border: 2px solid black;
+    @apply bg-white p-4;
   }
 
   /* FIXME: printing css is not working */
