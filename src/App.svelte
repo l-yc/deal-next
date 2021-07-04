@@ -262,6 +262,8 @@ li {
 
   function loadSlide(slideNo: number) {
     activeSlideIndex = slideNo;
+    activeSlide = slides[slideNo]; // not sure why the reactivity is slow
+    console.log(activeSlideIndex, slides, activeSlide);
     cm?.dispatch({
       changes: {
         from: 0,
@@ -404,12 +406,12 @@ li {
         <Modal on:close={closeExportSlidesModal}>
           <div slot="header">Select a file type</div>
           <div slot="body">
-            {#each exportTypes as typ, i}
+            {#each exportTypes as typ}
               <button on:click={(e) => exportSlides(typ)} class="btn">.{typ}</button>
             {/each}
           </div>
           <div slot="footer" class="flex justify-center">
-            <button class="btn" on:click={closeExportSlidesModal}>Cancel</button>
+            <button class="btn" on:click={closeExportSlidesModal}>Dismiss</button>
           </div>
         </Modal>
       {/if}
@@ -462,7 +464,7 @@ li {
     <div class="col-span-1 flex flex-row items-center justify-center">
       <div class="px-4">
         <input
-          value={title}
+          bind:value={title}
           size={title.length}
           type="text"
           class="text-center border-b-2 border-black"
@@ -485,7 +487,7 @@ li {
               <li>
                 <label for="settings.ratio" class="mr-2">Ratio:</label>
                 <input
-                  value={settings.ratio}
+                  bind:value={settings.ratio}
                   name="settings.ratio"
                   size={settings.ratio.length}
                   type="text"
@@ -495,7 +497,7 @@ li {
               <li>
                 <label for="settings.theme" class="mr-2">Theme:</label>
                 <select
-                  value={settings.theme}
+                  bind:value={settings.theme}
                   name="settings.theme"
                   class="
                     block
