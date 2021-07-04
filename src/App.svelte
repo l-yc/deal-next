@@ -85,6 +85,11 @@
   let activeSlideIndex = 0;
 
   let themeDefault = `
+slide {
+  background-color: white;
+  padding: 1rem;
+}
+
 h1 {
   font-size: 1.6rem;
 }
@@ -98,25 +103,33 @@ li {
     default: themeDefault,
   };
 
-  $: activeTheme = (() => {
+  $: activeTheme = theme.default;
+  $: activeThemeOutput = generateScopedStyle(activeTheme, '#preview');
+  
+  function generateScopedStyle(styles: string, scope: string): string {
     let doc = document.implementation.createHTMLDocument(""),
         styleElement = document.createElement("style");
 
-    styleElement.textContent = theme.default;
+    styleElement.textContent = styles;
     // the style will only be parsed once it is added to a document
     doc.body.appendChild(styleElement);
 
     let newStyle = '';
     for (let rule of styleElement.sheet.cssRules) {
-      // @ts-ignore
-      rule.selectorText = '#preview ' + rule.selectorText;
+      if (rule instanceof CSSStyleRule) {
+        if (rule.selectorText == 'slide') {
+          rule.selectorText = `${scope}`;
+        } else {
+          rule.selectorText = `${scope} ${rule.selectorText}`;
+        }
+      }
       newStyle += rule.cssText;
     }
 
     console.log('loading theme', newStyle);
     // svelte-preprocess is trying to parse the style tag, so we split it up ???
-    return `<st` + `yle>${newStyle}<st` + `yle>`;
-  })();
+    return `<st` + `yle data-theme>${newStyle}</st` + `yle>`;
+  }
 
   let exportModalVisible = false;
   let importModalVisible = false;
@@ -172,7 +185,7 @@ li {
       d = parseInt(x[0]);
 
     if (!preview) return "";
-    let w = "90vh";
+    let w = "30rem";
     return `width: ${w}; height: calc(${w} * ${n} / ${d});`;
   })();
   $: activeSlide = slides[activeSlideIndex];
@@ -263,7 +276,6 @@ li {
   function loadSlide(slideNo: number) {
     activeSlideIndex = slideNo;
     activeSlide = slides[slideNo]; // not sure why the reactivity is slow
-    console.log(activeSlideIndex, slides, activeSlide);
     cm?.dispatch({
       changes: {
         from: 0,
@@ -302,7 +314,7 @@ li {
     } else if (typ == "pdf") {
       const prtHtml = slides
         .map(
-          (s) => `<div class="border-2 border-black" style="${
+          (s) => `<div class="slide border-2 border-black" style="${
             ratioStyle
           }">
         ${DOMPurify.sanitize(marked(s.content))}</div>`
@@ -314,9 +326,11 @@ li {
         ...Array.from(
           document.querySelectorAll('link[rel="stylesheet"], style')
         ),
-      ]) {
+      ]) if (node instanceof HTMLElement && !('theme' in node.dataset)) {
+        // we will add the theme css ourselves
         stylesHtml += node.outerHTML;
       }
+      stylesHtml += generateScopedStyle(activeTheme, '.slide');
 
       const WinPrint = <Window>(
         window.open(
@@ -539,7 +553,7 @@ li {
     </div>
     <div id="preview-pane" class="p-4 col-span-1">
       <h1 class="mb-4">Preview</h1>
-      {@html activeTheme}
+      {@html activeThemeOutput}
       <div
         id="preview-wrapper"
         bind:this={previewWrapper}
@@ -547,6 +561,7 @@ li {
       >
         <div
           id="preview"
+          class="slide"
           bind:this={preview}
           style={ratioStyle}
           on:click={nextSlide}
@@ -573,8 +588,7 @@ li {
   }
 
   #preview {
-    border: 2px solid black;
-    @apply bg-white p-4;
+    @apply border-2 border-black;
   }
 
   /* FIXME: printing css is not working */
