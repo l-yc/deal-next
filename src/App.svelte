@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { onMount } from 'svelte'
+  import { onMount } from "svelte";
 
-  import Modal from './lib/Modal.svelte'
+  import Modal from "./lib/Modal.svelte";
 
-  import * as _ from 'lodash'
+  import * as _ from "lodash";
   import marked from "marked";
   import DOMPurify from "dompurify";
   import hljs from "highlight.js";
@@ -17,7 +17,7 @@
 
   import FileSaver from "file-saver";
 
-  import Heroicon from '@martinse/svelte-heroicons';
+  import Heroicon from "@martinse/svelte-heroicons";
   import {
     desktopComputer,
     cog,
@@ -25,9 +25,6 @@
     documentDownload,
     upload,
   } from "@martinse/svelte-heroicons/dist/solid";
-
-  //import { Previewer } from "pagedjs/dist/paged.js";
-  //import "pagedjs/dist/paged.polyfill.js";
 
   // set up imports
   let marked_render = new marked.Renderer();
@@ -37,18 +34,21 @@
     var isTeXLine = /^\$\$(\s*.*\s*)\$\$$/.test(text);
 
     if (!isTeXLine && isTeXInline) {
-      text = text.replace(/(\$([^\$]*)\$)+/g, function (_$1: string, $2: string) {
-        // prevent conflict with code
-        if ($2.indexOf("<code>") >= 0 || $2.indexOf("</code>") >= 0) {
-          return $2;
-        } else {
-          let raw = $2.replace(/\$/g, "").replace(/[^\\](%)/g, (match) => {
-            return match[0] + "\\" + "%";
-          });
-          var html = katex.renderToString(raw, { throwOnError: false });
-          return html;
+      text = text.replace(
+        /(\$([^\$]*)\$)+/g,
+        function (_$1: string, $2: string) {
+          // prevent conflict with code
+          if ($2.indexOf("<code>") >= 0 || $2.indexOf("</code>") >= 0) {
+            return $2;
+          } else {
+            let raw = $2.replace(/\$/g, "").replace(/[^\\](%)/g, (match) => {
+              return match[0] + "\\" + "%";
+            });
+            var html = katex.renderToString(raw, { throwOnError: false });
+            return html;
+          }
         }
-      });
+      );
     } else if (isTeXLine) {
       let raw = text.replace(/\$/g, "").replace(/[^\\](%)/g, (match) => {
         return match[0] + "\\" + "%";
@@ -76,7 +76,6 @@
     smartypants: false,
     xhtml: false,
   });
-
 
   // refs
   let importedSlides, editor, preview, previewWrapper;
@@ -107,20 +106,20 @@ li {
   };
 
   $: activeTheme = theme.default;
-  $: activeThemeOutput = generateScopedStyle(activeTheme, '#preview');
-  
+  $: activeThemeOutput = generateScopedStyle(activeTheme, "#preview");
+
   function generateScopedStyle(styles: string, scope: string): string {
     let doc = document.implementation.createHTMLDocument(""),
-        styleElement = document.createElement("style");
+      styleElement = document.createElement("style");
 
     styleElement.textContent = styles;
     // the style will only be parsed once it is added to a document
     doc.body.appendChild(styleElement);
 
-    let newStyle = '';
+    let newStyle = "";
     for (let rule of styleElement.sheet.cssRules) {
       if (rule instanceof CSSStyleRule) {
-        if (rule.selectorText == 'slide') {
+        if (rule.selectorText == "slide") {
           rule.selectorText = `${scope}`;
         } else {
           rule.selectorText = `${scope} ${rule.selectorText}`;
@@ -129,7 +128,7 @@ li {
       newStyle += rule.cssText;
     }
 
-    console.log('loading theme', newStyle);
+    console.log("loading theme", newStyle);
     // svelte-preprocess is trying to parse the style tag, so we split it up ???
     return `<st` + `yle data-theme>${newStyle}</st` + `yle>`;
   }
@@ -139,7 +138,10 @@ li {
   let helpModalVisible = false;
   let settingsModalVisible = false;
 
-  let exportTypes = ["deal", "pdf"];
+  let exportTypes = [
+    { type: "deal", description: "deal file" },
+    { type: "pdf", description: "chrome only" },
+  ];
 
   let settings = {
     ratio: "",
@@ -188,12 +190,13 @@ li {
       d = parseInt(x[0]);
 
     if (!preview) return "";
-    let w = 30, h = w*n/d;
+    let w = 30,
+      h = (w * n) / d;
     return `width: ${w}rem; height: ${h}rem`;
   })();
   $: activeSlide = slides[activeSlideIndex];
   $: output = DOMPurify.sanitize(marked(activeSlide.content));
-    
+
   // mounted
   onMount(() => {
     settings.ratio = "4:3";
@@ -210,8 +213,10 @@ li {
           }),
           EditorView.domEventHandlers({
             paste(event: ClipboardEvent, v: EditorView) {
-              // @ts-ignore originalEvent for newer chrome version
-              let items = (event.clipboardData || event.originalEvent.clipboardData)?.items;
+              let items = (
+                // @ts-ignore originalEvent for newer chrome version
+                event.clipboardData || event.originalEvent.clipboardData
+              )?.items;
               for (let index in items) {
                 let item = items[index];
                 if (item.kind === "file") {
@@ -219,9 +224,11 @@ li {
                   let reader = new FileReader();
                   reader.onload = function (event: ProgressEvent<FileReader>) {
                     if (!event.target) return;
-                    v.dispatch(v.state.replaceSelection(
-                      `<img src="${event.target.result}" />`
-                    ))
+                    v.dispatch(
+                      v.state.replaceSelection(
+                        `<img src="${event.target.result}" />`
+                      )
+                    );
                   }; // data url!
                   reader.readAsDataURL(blob);
                 }
@@ -251,7 +258,6 @@ li {
         break;
     }
   };
-
 
   // methods
   function prevSlide() {
@@ -284,7 +290,7 @@ li {
         from: 0,
         to: cm.state.doc.length,
         insert: activeSlide.content,
-      }
+      },
     });
   }
 
@@ -317,8 +323,10 @@ li {
     } else if (typ == "pdf") {
       const prtHtml = slides
         .map(
-          (s) => `<div class="slide border-2 border-black" style="${ratioStyle}">
-        ${DOMPurify.sanitize(marked(s.content))}</div>`
+          (s) =>
+            `<div class="slide border-2 border-black" style="${ratioStyle}">${DOMPurify.sanitize(
+              marked(s.content)
+            )}</div>`
         )
         .join("<footer></footer>");
 
@@ -327,24 +335,33 @@ li {
         ...Array.from(
           document.querySelectorAll('link[rel="stylesheet"], style')
         ),
-      ]) if (node instanceof HTMLElement && !('theme' in node.dataset)) {
-        // we will add the theme css ourselves
-        stylesHtml += node.outerHTML;
-      }
-      stylesHtml += generateScopedStyle(activeTheme, '.slide');
+      ])
+        if (node instanceof HTMLElement && !("theme" in node.dataset)) {
+          // we will add the theme css ourselves
+          stylesHtml += node.outerHTML;
+        }
+      stylesHtml += generateScopedStyle(activeTheme, ".slide");
 
       // add print css using pagedjs
       let x = settings.ratio.split(":");
-      let n = parseInt(x[1]), d = parseInt(x[0]);
-      let w = "30rem", h = 30*n/d + 'rem';
-      console.log(n/d);
-      stylesHtml += `<st` + `yle>
+      let n = parseInt(x[1]),
+        d = parseInt(x[0]);
+      let w = "30rem",
+        h = (30 * n) / d + "rem";
+      console.log(n / d);
+      stylesHtml +=
+        `<st` +
+        `yle>
         @page {
           margin: 0mm 0mm;
           size: ${w} ${h};
         }
-      </st` + `yle>`;
-      stylesHtml += `<scr` + `ipt src="https://unpkg.com/pagedjs/dist/paged.polyfill.js"></scr` + `ipt>`;
+      </st` +
+        `yle>`;
+      stylesHtml +=
+        `<scr` +
+        `ipt src="https://unpkg.com/pagedjs/dist/paged.polyfill.js"></scr` +
+        `ipt>`;
 
       const WinPrint = <Window>(
         window.open(
@@ -366,9 +383,8 @@ li {
 
       WinPrint.document.close();
       WinPrint.focus();
-      WinPrint.print();
-      //WinPrint.close();
     } else {
+      console.log(typ);
       alert("Error: unimplemented!");
     }
   }
@@ -421,7 +437,6 @@ li {
   function closeSettingsModal() {
     settingsModalVisible = false;
   }
-
 </script>
 
 <main>
@@ -434,12 +449,17 @@ li {
         <Modal on:close={closeExportSlidesModal}>
           <div slot="header">Select a file type</div>
           <div slot="body">
-            {#each exportTypes as typ}
-              <button on:click={(e) => exportSlides(typ)} class="btn">.{typ}</button>
+            {#each exportTypes as { type, description }}
+              <button on:click={(e) => exportSlides(type)} class="btn">
+                .{type}
+                <p>({description})</p>
+              </button>
             {/each}
           </div>
           <div slot="footer" class="flex justify-center">
-            <button class="btn" on:click={closeExportSlidesModal}>Dismiss</button>
+            <button class="btn" on:click={closeExportSlidesModal}
+              >Dismiss</button
+            >
           </div>
         </Modal>
       {/if}
@@ -563,7 +583,7 @@ li {
   <div id="workspace" class="flex-1 grid grid-cols-2 gap-4">
     <div id="editor-pane" class="p-4 col-span-1">
       <h1 class="mb-4">Editor</h1>
-      <div bind:this={editor}></div>
+      <div bind:this={editor} />
     </div>
     <div id="preview-pane" class="p-4 col-span-1">
       <h1 class="mb-4">Preview</h1>
