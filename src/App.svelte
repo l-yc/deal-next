@@ -314,9 +314,10 @@ li {
     } else if (typ == "pdf") {
       const prtHtml = slides
         .map(
-          (s) => `<div class="slide border-2 border-black" style="${
-            ratioStyle
-          }">
+          (s) => `<div class="slide border-2 border-black" style="
+            margin: 1rem auto;
+            ${ratioStyle}
+          ">
         ${DOMPurify.sanitize(marked(s.content))}</div>`
         )
         .join("<footer></footer>");
@@ -331,6 +332,16 @@ li {
         stylesHtml += node.outerHTML;
       }
       stylesHtml += generateScopedStyle(activeTheme, '.slide');
+      // add print css
+      stylesHtml += `
+      <style>
+        @media print {
+          footer {
+            page-break-after: always;
+          }
+        }
+      </style>
+      `
 
       const WinPrint = <Window>(
         window.open(
@@ -589,12 +600,5 @@ li {
 
   #preview {
     @apply border-2 border-black;
-  }
-
-  /* FIXME: printing css is not working */
-  @media print {
-    footer {
-      page-break-after: always;
-    }
   }
 </style>
