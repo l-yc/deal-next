@@ -26,6 +26,9 @@
     upload,
   } from "@martinse/svelte-heroicons/dist/solid";
 
+  //import { Previewer } from "pagedjs/dist/paged.js";
+  //import "pagedjs/dist/paged.polyfill.js";
+
   // set up imports
   let marked_render = new marked.Renderer();
   let old_paragraph = marked_render.paragraph;
@@ -185,8 +188,8 @@ li {
       d = parseInt(x[0]);
 
     if (!preview) return "";
-    let w = "30rem";
-    return `width: ${w}; height: calc(${w} * ${n} / ${d});`;
+    let w = 30, h = w*n/d;
+    return `width: ${w}rem; height: ${h}rem`;
   })();
   $: activeSlide = slides[activeSlideIndex];
   $: output = DOMPurify.sanitize(marked(activeSlide.content));
@@ -314,10 +317,7 @@ li {
     } else if (typ == "pdf") {
       const prtHtml = slides
         .map(
-          (s) => `<div class="slide border-2 border-black" style="
-            margin: 1rem auto;
-            ${ratioStyle}
-          ">
+          (s) => `<div class="slide border-2 border-black" style="${ratioStyle}">
         ${DOMPurify.sanitize(marked(s.content))}</div>`
         )
         .join("<footer></footer>");
@@ -332,16 +332,19 @@ li {
         stylesHtml += node.outerHTML;
       }
       stylesHtml += generateScopedStyle(activeTheme, '.slide');
-      // add print css
-      stylesHtml += `
-      <style>
-        @media print {
-          footer {
-            page-break-after: always;
-          }
+
+      // add print css using pagedjs
+      let x = settings.ratio.split(":");
+      let n = parseInt(x[1]), d = parseInt(x[0]);
+      let w = "30rem", h = 30*n/d + 'rem';
+      console.log(n/d);
+      stylesHtml += `<st` + `yle>
+        @page {
+          margin: 0mm 0mm;
+          size: ${w} ${h};
         }
-      </style>
-      `
+      </st` + `yle>`;
+      stylesHtml += `<scr` + `ipt src="https://unpkg.com/pagedjs/dist/paged.polyfill.js"></scr` + `ipt>`;
 
       const WinPrint = <Window>(
         window.open(
@@ -364,7 +367,7 @@ li {
       WinPrint.document.close();
       WinPrint.focus();
       WinPrint.print();
-      WinPrint.close();
+      //WinPrint.close();
     } else {
       alert("Error: unimplemented!");
     }
