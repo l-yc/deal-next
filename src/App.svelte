@@ -4,6 +4,7 @@
   import Modal from "./lib/Modal.svelte";
   import renderMarkdown from "./lib/Renderer";
   import { theme, generateScopedStyle } from "./lib/Theme";
+  import { registerDocumentKeybindings } from "./lib/Keybindings";
 
   import * as _ from "lodash";
 
@@ -143,23 +144,18 @@
     });
   });
 
-  document.onkeydown = function (event: KeyboardEvent) {
-    if (!event.target) return;
-    if (!(event.target as HTMLElement).matches("body")) return; // ignore key press in code editor
-    switch (event.key) {
-      case "ArrowLeft":
-      case "ArrowUp":
-        prevSlide();
-        break;
-
-      case "ArrowRight":
-      case "ArrowDown":
-      case "Spacebar":
-      case "Enter":
-        nextSlide();
-        break;
-    }
-  };
+  registerDocumentKeybindings([
+    {
+      keys: ["ArrowLeft", "ArrowUp", "Backspace"],
+      description: "Navigate to previous slide",
+      run: () => prevSlide(),
+    },
+    {
+      keys: ["ArrowRight", "ArrowDown", " ", "Enter"],
+      description: "Navigate to next slide",
+      run: () => nextSlide(),
+    },
+  ]);
 
   // methods
   function prevSlide() {
