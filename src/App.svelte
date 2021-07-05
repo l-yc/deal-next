@@ -4,6 +4,7 @@
   import Modal from "./lib/Modal.svelte";
   import renderMarkdown from "./lib/Renderer";
   import { theme, generateScopedStyle } from "./lib/Theme";
+  import type { Keybind } from "./lib/Keybindings";
   import { registerDocumentKeybindings } from "./lib/Keybindings";
 
   import * as _ from "lodash";
@@ -52,40 +53,72 @@
     theme: "default",
   };
 
-  let keybindings = [
-    {
-      key: "Alt-[",
-      description: "Navigate to previous slide",
-      run: (v: EditorView) => {
-        prevSlide();
-        return true;
+  let keybindings: { global: Keybind[], doc: Keybind[], editor: Keybind[] } = {
+    global: [
+      {
+        keys: ["Ctrl-Alt-n"],
+        description: "Create a new slide",
+        run: () => newSlide(),
       },
-    },
-    {
-      key: "Alt-]",
-      description: "Navigate to next slide",
-      run: (v: EditorView) => {
-        nextSlide();
-        return true;
+      {
+        keys: ["Ctrl-Alt-m"],
+        description: "Duplicate current slide",
+        run: () => duplicateSlide(),
       },
-    },
-    {
-      key: "Alt-n",
-      description: "Create a new slide",
-      run: (v: EditorView) => {
-        newSlide();
-        return true;
+      {
+        keys: ["Ctrl-Alt-d"],
+        description: "Delete current slide",
+        run: () => deleteSlide(),
       },
-    },
-    {
-      key: "Alt-m",
-      description: "Duplicate current slide",
-      run: (v: EditorView) => {
-        duplicateSlide();
-        return true;
+    ],
+
+    doc: [
+      {
+        keys: ["ArrowLeft", "ArrowUp", "Backspace"],
+        description: "Navigate to previous slide",
+        run: () => prevSlide(),
       },
-    },
-  ];
+      {
+        keys: ["ArrowRight", "ArrowDown", " ", "Enter"],
+        description: "Navigate to next slide",
+        run: () => nextSlide(),
+      },
+    ],
+
+    editor: [
+      {
+        keys: ["Ctrl-Alt-ArrowLeft", "Ctrl-Alt-ArrowUp"],
+        description: "Navigate to previous slide",
+        run: () => prevSlide(),
+      },
+      {
+        keys: ["Ctrl-Alt-ArrowRight", "Ctrl-Alt-ArrowDown"],
+        description: "Navigate to next slide",
+        run: () => nextSlide(),
+      },
+    ],
+  };
+
+  registerDocumentKeybindings(keybindings.global.concat(keybindings.doc));
+
+  function transformKeybindingsForEditor(keybindings: Keybind[]) {
+    let ret = keybindings
+      .map((kb) => {
+        return kb.keys.map((c) => {
+          return {
+            key: c,
+            description: kb.description,
+            run: (v: EditorView) => {
+              kb.run();
+              return true;
+            },
+          };
+        });
+      })
+      .reduce((a, b) => a.concat(b));
+    console.log(ret);
+    return ret;
+  }
 
   // computed
   $: ratioStyle = (() => {
@@ -117,9 +150,8 @@
           }),
           EditorView.domEventHandlers({
             paste(event: ClipboardEvent, v: EditorView) {
-              let items = ( // @ts-ignore originalEvent for newer chrome version
-                event.clipboardData || event.originalEvent.clipboardData
-              )?.items;
+              let items = // @ts-ignore originalEvent for newer chrome version
+              (event.clipboardData || event.originalEvent.clipboardData)?.items;
               for (let index in items) {
                 let item = items[index];
                 if (item.kind === "file") {
@@ -138,24 +170,15 @@
               }
             },
           }),
-          keymap.of(keybindings),
+          keymap.of(
+            transformKeybindingsForEditor(
+              keybindings.global.concat(keybindings.editor)
+            )
+          ),
         ],
       }),
     });
   });
-
-  registerDocumentKeybindings([
-    {
-      keys: ["ArrowLeft", "ArrowUp", "Backspace"],
-      description: "Navigate to previous slide",
-      run: () => prevSlide(),
-    },
-    {
-      keys: ["ArrowRight", "ArrowDown", " ", "Enter"],
-      description: "Navigate to next slide",
-      run: () => nextSlide(),
-    },
-  ]);
 
   // methods
   function prevSlide() {
@@ -178,6 +201,10 @@
   function duplicateSlide() {
     let dup = _.cloneDeep(activeSlide);
     newSlide(dup);
+  }
+
+  function deleteSlide() {
+    alert("unimplemented");
   }
 
   function loadSlide(slideNo: number) {
@@ -383,17 +410,21 @@
       {#if helpModalVisible}
         <Modal on:close={closeHelpModal}>
           <div slot="header">Help</div>
-          <div slot="body">
-            <ul>
-              {#each keybindings as kb}
+          <div slot="body" class="overflow-y-auto">
+            {#each Object.entries(keybindings) as [typ, kbg]}
+            <h3 class="font-semi-bold ml-2">{typ}</h3>
+            <ul class="p-2">
+              {#each kbg as kb}
                 <li>
-                  <pre
-                    class="inline rounded bg-gray-100 p-1 text-xs">{kb.key}</pre>
-                  :
+                  {#each kb.keys as c}
+                    <pre
+                      class="inline rounded bg-gray-100 p-1 text-xs">{c}</pre>
+                  {/each}:
                   {kb.description}
                 </li>
               {/each}
             </ul>
+            {/each}
           </div>
           <div slot="footer" class="flex justify-center">
             <button class="btn" on:click={closeHelpModal}>Got it!</button>

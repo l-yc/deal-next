@@ -9,6 +9,12 @@ interface KeyCombo {
   metaKey: boolean;
 }
 
+interface Keybind {
+  keys: string[];
+  description: string;
+  run: () => void;
+}
+
 function modkey(m: string): string {
   return m[0].toUpperCase() + m.slice(1, m.length - 3);
 }
@@ -25,7 +31,7 @@ function matchKey(combo: string, event: KeyboardEvent): boolean {
   return fields.map(k => obj[k] === event[k]).reduce((a, b) => a&&b, true); 
 }
 
-export function registerDocumentKeybindings(keybindings): void {
+function registerDocumentKeybindings(keybindings: Keybind[]): void {
   document.onkeydown = function (event: KeyboardEvent) {
     if (!event.target) return;
     if (!(event.target as HTMLElement).matches("body")) return; // ignore key press in code editor
@@ -40,3 +46,8 @@ export function registerDocumentKeybindings(keybindings): void {
     });
   };
 }
+
+export {
+  registerDocumentKeybindings
+};
+export type { Keybind };
