@@ -204,7 +204,10 @@
   }
 
   function deleteSlide() {
-    alert("unimplemented");
+    slides = slides.filter((e, i) => i !== activeSlideIndex);
+    if (slides.length === 0) newSlide();
+    activeSlideIndex = Math.min(activeSlideIndex, slides.length-1);
+    loadSlide(activeSlideIndex);
   }
 
   function loadSlide(slideNo: number) {
