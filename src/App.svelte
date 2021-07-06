@@ -33,6 +33,7 @@
   let cm = null as EditorView | null;
   let title = "Untitled";
   let slides = [{ content: "", notes: "" }];
+  for (let i = 0; i < 5; ++i) slides.push({ content: "# " + i, notes: ""});
   let activeSlideIndex = 0;
 
   $: activeTheme = theme.default;
@@ -116,20 +117,30 @@
         });
       })
       .reduce((a, b) => a.concat(b));
-    console.log(ret);
     return ret;
   }
+
+  function getScaledStyle(boundWidth: number, boundHeight: number): number {
+    let ratio = settings.ratio.split(":");
+    let frac = parseInt(ratio[1]) / parseInt(ratio[0]);
+
+    let width = Math.min(boundWidth, boundHeight / frac);
+
+    const w = 30; // rem
+    let px = w * parseFloat(getComputedStyle(document.documentElement).fontSize);
+    let scale = width / px;
+    return scale;
+  }
+
+  let previewScale = 1;
 
   // computed
   $: ratioStyle = (() => {
     let x = settings.ratio.split(":");
     let n = parseInt(x[1]),
       d = parseInt(x[0]);
-
-    if (!preview) return "";
-    let w = 30,
-      h = (w * n) / d;
-    return `width: ${w}rem; height: ${h}rem`;
+    let w = 30, h = (w * n) / d;
+    return `width: ${w}rem; height: ${h}rem; transform: scale(${previewScale});`;
   })();
   $: activeSlide = slides[activeSlideIndex];
   $: output = renderMarkdown(activeSlide.content);
@@ -178,6 +189,15 @@
         ],
       }),
     });
+
+    previewWrapper.onfullscreenchange = (event) => {
+      let elem = event.target;
+      let isFullscreen = document.fullscreenElement === elem;
+      if (isFullscreen)
+        previewScale = getScaledStyle(previewWrapper.offsetWidth, previewWrapper.offsetHeight);
+      else
+        previewScale = 1;
+    }
   });
 
   // methods
@@ -415,18 +435,18 @@
           <div slot="header">Help</div>
           <div slot="body" class="overflow-y-auto">
             {#each Object.entries(keybindings) as [typ, kbg]}
-            <h3 class="font-semi-bold ml-2">{typ}</h3>
-            <ul class="p-2">
-              {#each kbg as kb}
-                <li>
-                  {#each kb.keys as c}
-                    <pre
-                      class="inline rounded bg-gray-100 p-1 text-xs">{c}</pre>
-                  {/each}:
-                  {kb.description}
-                </li>
-              {/each}
-            </ul>
+              <h3 class="font-semi-bold ml-2">{typ}</h3>
+              <ul class="p-2">
+                {#each kbg as kb}
+                  <li>
+                    {#each kb.keys as c}
+                      <pre
+                        class="inline rounded bg-gray-100 p-1 text-xs">{c}</pre>
+                    {/each}:
+                    {kb.description}
+                  </li>
+                {/each}
+              </ul>
             {/each}
           </div>
           <div slot="footer" class="flex justify-center">
@@ -523,7 +543,7 @@
       <div
         id="preview-wrapper"
         bind:this={previewWrapper}
-        class="flex items-center justify-center"
+        class="flex flex-col items-center justify-center"
       >
         <div
           id="preview"
