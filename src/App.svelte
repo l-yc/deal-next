@@ -33,7 +33,7 @@
   let cm = null as EditorView | null;
   let title = "Untitled";
   let slides = [{ content: "", notes: "" }];
-  for (let i = 0; i < 5; ++i) slides.push({ content: "# " + i, notes: ""});
+  //for (let i = 0; i < 5; ++i) slides.push({ content: "# " + i, notes: ""});
   let activeSlideIndex = 0;
 
   $: activeTheme = theme.default;
@@ -140,7 +140,7 @@
     let n = parseInt(x[1]),
       d = parseInt(x[0]);
     let w = 30, h = (w * n) / d;
-    return `width: ${w}rem; height: ${h}rem; transform: scale(${previewScale});`;
+    return `width: ${w}rem; height: ${h}rem; transform: scale(${previewScale})`;
   })();
   $: activeSlide = slides[activeSlideIndex];
   $: output = renderMarkdown(activeSlide.content);
@@ -554,6 +554,19 @@
         >
           {@html output}
         </div>
+      </div>
+
+      <!-- slide preview bar -->
+      <div class="relative overflow-x-auto" style="height: 8rem">
+        {@html generateScopedStyle(activeTheme, ".slide-preview")}
+        {#each slides as slide, i}
+          <div 
+            class="absolute slide-preview border-grey border-2 flex-shrink-0"
+            style="{ratioStyle}; top: 2rem; left: {i*10}rem; transform: scale(0.2); transform-origin: left top;"
+          >
+            {@html renderMarkdown(slide.content)}
+          </div>
+        {/each}
       </div>
     </div>
   </div>
