@@ -33,7 +33,7 @@
   let cm = null as EditorView | null;
   let title = "Untitled";
   let slides = [{ content: "", notes: "" }];
-  //for (let i = 0; i < 5; ++i) slides.push({ content: "# " + i, notes: ""});
+  for (let i = 0; i < 5; ++i) slides.push({ content: "# " + i, notes: ""});
   let activeSlideIndex = 0;
 
   $: activeTheme = theme.default;
@@ -70,6 +70,16 @@
         keys: ["Ctrl-Alt-d"],
         description: "Delete current slide",
         run: () => deleteSlide(),
+      },
+      {
+        keys: ["Ctrl-g"],
+        description: "Go to slide",
+        run: () => gotoSlide(),
+      },
+      {
+        keys: ["Ctrl-Alt-g"],
+        description: "Move slide to",
+        run: () => moveSlide(),
       },
     ],
 
@@ -228,6 +238,40 @@
     if (slides.length === 0) newSlide();
     activeSlideIndex = Math.min(activeSlideIndex, slides.length-1);
     loadSlide(activeSlideIndex);
+  }
+
+  function gotoSlide() {
+    let slideNo: number = parseInt(window.prompt("Enter slide number:"));
+    if (isNaN(slideNo)) {
+      alert("Input must be a number")
+      return;
+    }
+
+    if (slideNo < 1 || slideNo > slides.length) {
+      alert("Input out of range");
+      return;
+    }
+    --slideNo;
+
+    loadSlide(slideNo);
+  }
+
+  function moveSlide() {
+    let slideNo: number = parseInt(window.prompt("Enter slide number:"));
+    if (isNaN(slideNo)) {
+      alert("Input must be a number")
+      return;
+    }
+
+    if (slideNo < 1 || slideNo > slides.length) {
+      alert("Input out of range");
+      return;
+    }
+    --slideNo;
+
+    slides.splice(slideNo, 0, slides.splice(activeSlideIndex, 1)[0]);
+    slides = slides; // trigger update
+    loadSlide(slideNo);
   }
 
   function loadSlide(slideNo: number) {
