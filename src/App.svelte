@@ -81,6 +81,11 @@
         description: "Move slide to",
         run: () => moveSlide(),
       },
+      {
+        keys: ["Ctrl-s"],
+        description: "Save slide (debugging feature)",
+        run: () => saveSlides(),
+      },
     ],
 
     doc: [
@@ -292,6 +297,21 @@
 
   function toggleFullscreen() {
     (previewWrapper as HTMLElement).requestFullscreen();
+  }
+
+  function saveSlides() {
+    let backup = {
+      settings: settings,
+      slides: slides,
+    };
+
+    let key = title;
+    if (window.localStorage.getItem(key) && 
+        !window.confirm(`Overwrite "${title}"?`)) {
+      return;
+    }
+
+    window.localStorage.setItem(key, JSON.stringify(backup));
   }
 
   function showExportSlidesModal() {

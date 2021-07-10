@@ -39,6 +39,7 @@ function registerDocumentKeybindings(keybindings: Keybind[]): void {
     console.log(event);
     keybindings.forEach(kb => {
       if (kb.keys.map((c: string) => matchKey(c, event)).reduce((a, b) => a||b, false)) {
+        event.preventDefault();
         console.log(kb.run);
         kb.run();
         return;
