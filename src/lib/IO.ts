@@ -1,6 +1,6 @@
 import { generateScopedStyle, Theme } from "./Theme";
 import { getRatioStyle, renderMarkdown } from "./Renderer";
-import type { Settings, Slide } from "./DataTypes";
+import type { Meta, Settings, Slide } from "./DataTypes";
 
 import FileSaver from "file-saver";
 
@@ -9,26 +9,27 @@ const exportTypes = [
   { type: "pdf", description: "chrome only" },
 ];
 
-function exportSlides_(typ: string, title: string, meta: Meta, settings: Settings, slides: Slide[], activeTheme: Theme) {
+function exportSlides_(typ: string, meta: Meta, settings: Settings, slides: Slide[], activeTheme: Theme) {
   if (typ === "deal") {
     let exportData = {
+      meta: meta,
       settings: settings,
       slides: slides,
     };
     let blob = new Blob([JSON.stringify(exportData)], {
       type: "text/plain;charset=utf-8",
     });
-    FileSaver.saveAs(blob, title + ".deal");
+    FileSaver.saveAs(blob, meta.title + ".deal");
   } else if (typ == "pdf") {
     let ratioStyle = getRatioStyle(settings.ratio, 1);
 
     const prtHtml = slides
       .map(
         (s, i) =>
-          `<div class="slide border-2 border-black" style="${ratioStyle}">
+          `<div class="slide ${i == 0 ? "first" : ""} border-2 border-black" style="${ratioStyle}">
               ${renderMarkdown(s.content)}
               <div class="slide-footer">
-                <div class="slide-footer-text">${title} / ${meta.author}</div>
+                <div class="slide-footer-text">${meta.title} / ${meta.author}</div>
                 <div class="slide-number">${i+1}</div>
               </div>
             </div>`
@@ -94,7 +95,7 @@ function exportSlides_(typ: string, title: string, meta: Meta, settings: Setting
   }
 }
 
-function importSlides_(importedSlides: HTMLInputElement): Promise<{ title: string, settings: Settings, slides: Slide[] }> {
+function importSlides_(importedSlides: HTMLInputElement): Promise<{ meta: Meta, settings: Settings, slides: Slide[] }> {
   return new Promise((resolve, reject) => {
     let f = importedSlides.files?.[0];
     if (!f) {
@@ -111,7 +112,7 @@ function importSlides_(importedSlides: HTMLInputElement): Promise<{ title: strin
 
       let importData = JSON.parse(evt.target.result as string);
       resolve({
-        title: f.name.replace(/\.deal$/, ""),
+        meta: importData.meta,
         settings: importData.settings,
         slides: importData.slides,
       })

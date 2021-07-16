@@ -12,6 +12,7 @@ function newSlideObject(): Slide {
 
 
 export type Meta = {
+  title: string,
   author: string,
 }
 

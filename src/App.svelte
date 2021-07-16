@@ -32,8 +32,8 @@
     previewWrapper: HTMLElement;
 
   // config
-  let title = "Untitled";
   let meta: Meta = {
+    title: "Untitled",
     author: "Anonymous",
   };
   let settings: Settings = {
@@ -235,13 +235,14 @@
 
   function saveSlides() {
     let backup = {
+      meta: meta,
       settings: settings,
       slides: slides,
     };
 
-    let key = title;
+    let key = meta.title;
     if (window.localStorage.getItem(key) && 
-        !window.confirm(`Overwrite "${title}"?`)) {
+        !window.confirm(`Overwrite "${meta.title}"?`)) {
       return;
     }
 
@@ -257,7 +258,7 @@
   }
 
   function exportSlides(typ: string) {
-    exportSlides_(typ, title, meta, settings, slides, activeTheme);
+    exportSlides_(typ, meta, settings, slides, activeTheme);
   }
 
   function showImportSlidesModal() {
@@ -271,7 +272,7 @@
   function importSlides() {
     importSlides_(importedSlides)
       .then(data => {
-        ({ title, settings, slides } = data)
+        ({ meta, settings, slides } = data)
         closeImportSlidesModal();
         loadSlide(0);
       })
@@ -379,8 +380,8 @@
 
     <div class="col-span-1 flex flex-row items-center justify-center">
       <input
-        bind:value={title}
-        size={title.length}
+        bind:value={meta.title}
+        size={meta.title.length}
         type="text"
         class="text-center border-b-2 border-black"
       />
@@ -493,7 +494,7 @@
         >
           {@html renderMarkdown(activeSlide.content)}
           <div class="slide-footer">
-            <div class="slide-footer-text">{title} / {meta.author}</div>
+            <div class="slide-footer-text">{meta.title} / {meta.author}</div>
             <div class="slide-number">{activeSlideIndex+1}</div>
           </div>
         </div>
@@ -510,7 +511,7 @@
           >
             {@html renderMarkdown(slide.content)}
             <div class="slide-footer">
-              <div class="slide-footer-text">{title} / {meta.author}</div>
+              <div class="slide-footer-text">{meta.title} / {meta.author}</div>
               <div class="slide-number">{activeSlideIndex+1}</div>
             </div>
           </div>
