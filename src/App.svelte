@@ -9,7 +9,7 @@
   import { registerDocumentKeybindings } from "./lib/Keybindings";
   import { exportSlides_, exportTypes, importSlides_ } from "./lib/IO";
 
-  import type { Slide, Settings } from "./lib/DataTypes";
+  import type { Slide, Settings, Meta } from "./lib/DataTypes";
   import { createEditor } from "./lib/Editor";
   import type { EditorView } from "@codemirror/basic-setup";
 
@@ -18,6 +18,7 @@
   import Heroicon from "@martinse/svelte-heroicons";
   import {
     desktopComputer,
+    adjustments,
     cog,
     informationCircle,
     documentDownload,
@@ -32,6 +33,9 @@
 
   // config
   let title = "Untitled";
+  let meta: Meta = {
+    author: "Anonymous",
+  };
   let settings: Settings = {
     ratio: "",
     theme: "default",
@@ -56,6 +60,7 @@
   let exportModalVisible = false;
   let importModalVisible = false;
   let helpModalVisible = false;
+  let metaModalVisible = false;
   let settingsModalVisible = false;
 
 
@@ -252,7 +257,7 @@
   }
 
   function exportSlides(typ: string) {
-    exportSlides_(typ, title, settings, slides, activeTheme);
+    exportSlides_(typ, title, meta, settings, slides, activeTheme);
   }
 
   function showImportSlidesModal() {
@@ -279,6 +284,14 @@
 
   function closeHelpModal() {
     helpModalVisible = false;
+  }
+
+  function showMetaModal() {
+    metaModalVisible = true;
+  }
+
+  function closeMetaModal() {
+    metaModalVisible = false;
   }
 
   function showSettingsModal() {
@@ -365,14 +378,37 @@
     </div>
 
     <div class="col-span-1 flex flex-row items-center justify-center">
-      <div class="px-4">
-        <input
-          bind:value={title}
-          size={title.length}
-          type="text"
-          class="text-center border-b-2 border-black"
-        />
-      </div>
+      <input
+        bind:value={title}
+        size={title.length}
+        type="text"
+        class="text-center border-b-2 border-black"
+      />
+      <button on:click={showMetaModal} class="btn btn-icon">
+        <Heroicon icon={adjustments} class="h-6 w-6" />
+      </button>
+      {#if metaModalVisible}
+        <Modal on:close={closeMetaModal}>
+          <div slot="header">Meta</div>
+          <div slot="body">
+            <ul>
+              <li>
+                <label for="meta.author" class="mr-2">Author:</label>
+                <input
+                  bind:value={meta.author}
+                  name="meta.author"
+                  size={meta.author.length}
+                  type="text"
+                  class="text-center border-b-2 border-black"
+                />
+              </li>
+            </ul>
+          </div>
+          <div slot="footer" class="flex justify-center">
+            <button class="btn" on:click={closeMetaModal}>All done!</button>
+          </div>
+        </Modal>
+      {/if}
     </div>
 
     <div class="col-span-1 flex flex-row items-center justify-end">
@@ -450,26 +486,33 @@
       >
         <div
           id="preview"
-          class="slide"
+          class="slide {activeSlideIndex === 0 ? 'first' : ''}"
           bind:this={preview}
           style={ratioStyle}
           on:click={nextSlide}
         >
           {@html renderMarkdown(activeSlide.content)}
-          <div class="slide-number">{activeSlideIndex+1}</div>
+          <div class="slide-footer">
+            <div class="slide-footer-text">{title} / {meta.author}</div>
+            <div class="slide-number">{activeSlideIndex+1}</div>
+          </div>
         </div>
       </div>
 
       <!-- slide preview bar -->
       <div class="relative overflow-x-auto" style="height: 8rem">
         {@html generateScopedStyle(activeTheme, ".slide-preview")}
-        {#each slides as slide, i}
+        {#each slides as slide, slideIndex}
           <div 
             class="absolute slide-preview border-grey border-2 flex-shrink-0"
-            style="{ratioStyle}; top: 2rem; left: {i*10}rem; transform: scale(0.2); transform-origin: left top;"
+            style="{ratioStyle}; top: 2rem; left: {slideIndex*10}rem; transform: scale(0.2); transform-origin: left top;"
+            on:click={() => loadSlide(slideIndex)}
           >
             {@html renderMarkdown(slide.content)}
-            <div class="slide-number">{i+1}</div>
+            <div class="slide-footer">
+              <div class="slide-footer-text">{title} / {meta.author}</div>
+              <div class="slide-number">{activeSlideIndex+1}</div>
+            </div>
           </div>
         {/each}
       </div>
@@ -477,7 +520,7 @@
   </div>
 </main>
 
-<style lang="postcss">
+<style lang="postcss" windi:safelist>
   /* app slides */
   h1 {
     @apply text-2xl;
@@ -491,13 +534,11 @@
     @apply flex flex-row;
   }
 
-  .slide-number {
-    position: absolute; 
-    bottom: .2rem;
-    right: .4rem;
-  }
-
   #preview {
     @apply border-2 border-black;
+  }
+
+  .slide-preview {
+    @apply cursor-pointer hover:(filter brightness-90);
   }
 </style>

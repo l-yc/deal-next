@@ -9,7 +9,7 @@ const exportTypes = [
   { type: "pdf", description: "chrome only" },
 ];
 
-function exportSlides_(typ: string, title: string, settings: Settings, slides: Slide[], activeTheme: Theme) {
+function exportSlides_(typ: string, title: string, meta: Meta, settings: Settings, slides: Slide[], activeTheme: Theme) {
   if (typ === "deal") {
     let exportData = {
       settings: settings,
@@ -27,7 +27,10 @@ function exportSlides_(typ: string, title: string, settings: Settings, slides: S
         (s, i) =>
           `<div class="slide border-2 border-black" style="${ratioStyle}">
               ${renderMarkdown(s.content)}
-              <div class="slide-number" style="position: absolute; bottom: .2rem; right: .4rem;">${i + 1}</div>
+              <div class="slide-footer">
+                <div class="slide-footer-text">${title} / ${meta.author}</div>
+                <div class="slide-number">${i+1}</div>
+              </div>
             </div>`
       )
       .join("<footer></footer>");

@@ -13,6 +13,28 @@ h1 {
 li {
   list-style: disc inside;
 }
+
+.slide-footer {
+  position: absolute;
+  left: 0.5rem;
+  right: 0.5rem;
+  bottom: 0.25rem;
+  font-size: 0.75rem;
+  display: flex;
+  flex-flow: row;
+}
+
+slide.first .slide-footer-text {
+  visibility: hidden;
+}
+
+.slide-footer-text {
+  flex: 1;
+}
+
+.slide-number {
+  margin-left: 0.5rem;
+}
 `;
 
 const themes = {
@@ -32,6 +54,8 @@ function generateScopedStyle(styles: string, scope: string): string {
     if (rule instanceof CSSStyleRule) {
       if (rule.selectorText == "slide") {
         rule.selectorText = `${scope}`;
+      } else if (rule.selectorText.indexOf("slide") === 0) {
+        rule.selectorText = rule.selectorText.replace("slide", scope);
       } else {
         rule.selectorText = `${scope} ${rule.selectorText}`;
       }

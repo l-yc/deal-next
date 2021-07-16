@@ -11,6 +11,11 @@ function newSlideObject(): Slide {
 }
 
 
+export type Meta = {
+  author: string,
+}
+
+
 export type AspectRatio = string;
 
 function isAspectRatio(s: any): s is AspectRatio {
