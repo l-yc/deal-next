@@ -3,17 +3,17 @@
 
   import Modal from "./lib/Modal.svelte";
   import renderMarkdown from "./lib/Renderer";
-  import { theme, generateScopedStyle } from "./lib/Theme";
+  import type { Theme } from "./lib/Theme";
+  import { themes, generateScopedStyle } from "./lib/Theme";
   import type { Keybind } from "./lib/Keybindings";
   import { registerDocumentKeybindings } from "./lib/Keybindings";
   import { exportSlides_ } from "./lib/IO";
 
   import type { Slide, Settings } from "./lib/DataTypes";
+  import { createEditor } from "./lib/Editor";
+  import type { EditorView } from "@codemirror/basic-setup";
 
   import * as _ from "lodash";
-
-  import { basicSetup, EditorState, EditorView } from "@codemirror/basic-setup";
-  import { ViewUpdate, keymap } from "@codemirror/view";
 
   import Heroicon from "@martinse/svelte-heroicons";
   import {
@@ -42,7 +42,7 @@
   let slides: Slide[] = [{ content: "", notes: "" }];
   for (let i = 0; i < 5; ++i) slides.push({ content: "# " + i, notes: ""});
   let activeSlideIndex = 0;
-  let activeTheme: Theme = theme.default;
+  let activeTheme: Theme = themes.default;
 
   function getScaledStyle(boundWidth: number, boundHeight: number): number {
     let ratio = settings.ratio.split(":");
@@ -144,68 +144,12 @@
 
   registerDocumentKeybindings(keybindings.global.concat(keybindings.doc));
 
-  function transformKeybindingsForEditor(keybindings: Keybind[]) {
-    let ret = keybindings
-      .map((kb) => {
-        return kb.keys.map((c) => {
-          return {
-            key: c,
-            description: kb.description,
-            run: (v: EditorView) => {
-              kb.run();
-              return true;
-            },
-          };
-        });
-      })
-      .reduce((a, b) => a.concat(b));
-    return ret;
-  }
-
   // mounted
   onMount(() => {
     settings.ratio = "4:3";
-    cm = new EditorView({
-      parent: <Element>editor,
-      state: EditorState.create({
-        doc: "",
-        extensions: [
-          basicSetup,
-          EditorView.updateListener.of((v: ViewUpdate) => {
-            if (v.docChanged) {
-              updateCurrentSlide(v.state.doc.toString());
-            }
-          }),
-          EditorView.domEventHandlers({
-            paste(event: ClipboardEvent, v: EditorView) {
-              let items = // @ts-ignore originalEvent for newer chrome version
-              (event.clipboardData || event.originalEvent.clipboardData)?.items;
-              for (let index in items) {
-                let item = items[index];
-                if (item.kind === "file") {
-                  let blob = item.getAsFile();
-                  let reader = new FileReader();
-                  reader.onload = function (event: ProgressEvent<FileReader>) {
-                    if (!event.target) return;
-                    v.dispatch(
-                      v.state.replaceSelection(
-                        `<img src="${event.target.result}" />`
-                      )
-                    );
-                  }; // data url!
-                  reader.readAsDataURL(blob);
-                }
-              }
-            },
-          }),
-          keymap.of(
-            transformKeybindingsForEditor(
-              keybindings.global.concat(keybindings.editor)
-            )
-          ),
-        ],
-      }),
-    });
+    cm = createEditor(editor, updateCurrentSlide,
+            keybindings.global.concat(keybindings.editor)
+    );
 
     previewWrapper.onfullscreenchange = (event) => {
       let elem = event.target;

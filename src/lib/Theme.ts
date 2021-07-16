@@ -15,7 +15,7 @@ li {
 }
 `;
 
-const theme = {
+const themes = {
   default: themeDefault,
 };
 
@@ -45,6 +45,6 @@ function generateScopedStyle(styles: string, scope: string): string {
 }
 
 export {
-  theme,
+  themes,
   generateScopedStyle,
 }
