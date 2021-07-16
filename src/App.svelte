@@ -335,9 +335,10 @@
     } else if (typ == "pdf") {
       const prtHtml = slides
         .map(
-          (s) =>
+          (s, i) =>
             `<div class="slide border-2 border-black" style="${ratioStyle}">
               ${renderMarkdown(s.content)}
+              <div class="slide-number" style="position: absolute; bottom: .2rem; right: .4rem;">${i+1}</div>
             </div>`
         )
         .join("<footer></footer>");
@@ -617,6 +618,7 @@
           on:click={nextSlide}
         >
           {@html output}
+          <div class="slide-number">{activeSlideIndex+1}</div>
         </div>
       </div>
 
@@ -629,6 +631,7 @@
             style="{ratioStyle}; top: 2rem; left: {i*10}rem; transform: scale(0.2); transform-origin: left top;"
           >
             {@html renderMarkdown(slide.content)}
+            <div class="slide-number">{i+1}</div>
           </div>
         {/each}
       </div>
@@ -648,6 +651,12 @@
 
   .btn-icon {
     @apply flex flex-row;
+  }
+
+  .slide-number {
+    position: absolute; 
+    bottom: .2rem;
+    right: .4rem;
   }
 
   #preview {
