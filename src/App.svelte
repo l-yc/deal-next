@@ -7,7 +7,7 @@
   import { themes, generateScopedStyle } from "./lib/Theme";
   import type { Keybind } from "./lib/Keybindings";
   import { registerDocumentKeybindings } from "./lib/Keybindings";
-  import { exportSlides_ } from "./lib/IO";
+  import { exportSlides_, exportTypes, importSlides_ } from "./lib/IO";
 
   import type { Slide, Settings } from "./lib/DataTypes";
   import { createEditor } from "./lib/Editor";
@@ -57,11 +57,6 @@
   let importModalVisible = false;
   let helpModalVisible = false;
   let settingsModalVisible = false;
-
-  let exportTypes = [
-    { type: "deal", description: "deal file" },
-    { type: "pdf", description: "chrome only" },
-  ];
 
 
 
@@ -257,7 +252,7 @@
   }
 
   function exportSlides(typ: string) {
-    exportSlides_(typ, title, ratioStyle, activeTheme, settings, slides);
+    exportSlides_(typ, title, settings, slides, activeTheme);
   }
 
   function showImportSlidesModal() {
@@ -269,28 +264,13 @@
   }
 
   function importSlides() {
-    let f = (importedSlides as HTMLInputElement)?.files?.[0];
-    if (!f) {
-      alert("No slides selected.");
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.addEventListener("load", (evt) => {
-      if (!f || !evt.target || !evt.target.result) {
-        alert("Failed to import slides.");
-        return;
-      }
-
-      let importData = JSON.parse(evt.target.result as string);
-      title = f.name.replace(/\.deal$/, "");
-      settings = importData.settings;
-      slides = importData.slides;
-
-      closeImportSlidesModal();
-      loadSlide(0);
-    });
-    reader.readAsText(f);
+    importSlides_(importedSlides)
+      .then(data => {
+        ({ title, settings, slides } = data)
+        closeImportSlidesModal();
+        loadSlide(0);
+      })
+      .catch(err => alert(err));
   }
 
   function showHelpModal() {

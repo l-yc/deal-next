@@ -1,10 +1,15 @@
 import { generateScopedStyle, Theme } from "./Theme";
-import { renderMarkdown } from "./Renderer";
+import { getRatioStyle, renderMarkdown } from "./Renderer";
 import type { Settings, Slide } from "./DataTypes";
 
 import FileSaver from "file-saver";
 
-function exportSlides_(typ: string, title: string, ratioStyle: string, activeTheme: Theme, settings: Settings, slides: Slide[]) {
+const exportTypes = [
+  { type: "deal", description: "deal file" },
+  { type: "pdf", description: "chrome only" },
+];
+
+function exportSlides_(typ: string, title: string, settings: Settings, slides: Slide[], activeTheme: Theme) {
   if (typ === "deal") {
     let exportData = {
       settings: settings,
@@ -15,6 +20,8 @@ function exportSlides_(typ: string, title: string, ratioStyle: string, activeThe
     });
     FileSaver.saveAs(blob, title + ".deal");
   } else if (typ == "pdf") {
+    let ratioStyle = getRatioStyle(settings.ratio, 1);
+
     const prtHtml = slides
       .map(
         (s, i) =>
@@ -84,4 +91,31 @@ function exportSlides_(typ: string, title: string, ratioStyle: string, activeThe
   }
 }
 
-export {exportSlides_};
+function importSlides_(importedSlides: HTMLInputElement): Promise<{ title: string, settings: Settings, slides: Slide[] }> {
+  return new Promise((resolve, reject) => {
+    let f = importedSlides.files?.[0];
+    if (!f) {
+      reject("No slides selected.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.addEventListener("load", (evt) => {
+      if (!f || !evt.target || !evt.target.result) {
+        reject("Failed to import slides.");
+        return;
+      }
+
+      let importData = JSON.parse(evt.target.result as string);
+      resolve({
+        title: f.name.replace(/\.deal$/, ""),
+        settings: importData.settings,
+        slides: importData.slides,
+      })
+    });
+    reader.readAsText(f);
+
+  });
+}
+
+export { exportTypes, exportSlides_, importSlides_ };
