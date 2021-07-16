@@ -3,11 +3,6 @@ export type Slide = {
   notes: string;
 }
 
-export type Settings = {
-  ratio: string;
-  theme: string;
-}
-
 function newSlideObject(): Slide {
   return {
     content: '',
@@ -15,4 +10,21 @@ function newSlideObject(): Slide {
   };
 }
 
-export { newSlideObject };
+
+export type AspectRatio = string;
+
+function isAspectRatio(s: any): s is AspectRatio {
+  if (typeof x !== "string") return false;
+  let ab = (s as string).split(':');
+  if (ab.length !== 2) return false;
+  return ab.map(u => parseInt(u)).map(u => u != NaN && u != 0).reduce((a, b) => a && b, true);
+}
+
+
+export type Settings = {
+  ratio: string;
+  theme: string;
+}
+
+
+export { newSlideObject, isAspectRatio };

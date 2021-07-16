@@ -1,10 +1,10 @@
-import { generateScopedStyle } from "./Theme";
+import { generateScopedStyle, Theme } from "./Theme";
 import renderMarkdown from "./Renderer";
 import type { Settings, Slide } from "./DataTypes";
 
 import FileSaver from "file-saver";
 
-function exportSlides_(typ: string, title: string, ratioStyle: string, activeTheme: string, settings: Settings, slides: Slide[]) {
+function exportSlides_(typ: string, title: string, ratioStyle: string, activeTheme: Theme, settings: Settings, slides: Slide[]) {
   if (typ === "deal") {
     let exportData = {
       settings: settings,

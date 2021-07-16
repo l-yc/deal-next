@@ -1,4 +1,6 @@
-const themeDefault = `
+export type Theme = string;
+
+const themeDefault: Theme = `
 slide {
   background-color: white;
   padding: 1rem;

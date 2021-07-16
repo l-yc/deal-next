@@ -30,15 +30,44 @@
     preview: HTMLElement,
     previewWrapper: HTMLElement;
 
-  // data
-  let cm = null as EditorView | null;
+  // config
   let title = "Untitled";
+  let settings: Settings = {
+    ratio: "",
+    theme: "default",
+  };
+
+  // user input data
+  let cm = null as EditorView | null;
   let slides: Slide[] = [{ content: "", notes: "" }];
   for (let i = 0; i < 5; ++i) slides.push({ content: "# " + i, notes: ""});
   let activeSlideIndex = 0;
+  let activeTheme: Theme = theme.default;
 
-  $: activeTheme = theme.default;
-  $: activeThemeOutput = generateScopedStyle(activeTheme, "#preview");
+  function getScaledStyle(boundWidth: number, boundHeight: number): number {
+    let ratio = settings.ratio.split(":");
+    let frac = parseInt(ratio[1]) / parseInt(ratio[0]);
+
+    let width = Math.min(boundWidth, boundHeight / frac);
+
+    const w = 30; // rem
+    let px = w * parseFloat(getComputedStyle(document.documentElement).fontSize);
+    let scale = width / px;
+    return scale;
+  }
+
+  let previewScale = 1;
+
+  $: ratioStyle = (() => {
+    let x = settings.ratio.split(":");
+    let n = parseInt(x[1]),
+      d = parseInt(x[0]);
+    let w = 30, h = (w * n) / d;
+    return `width: ${w}rem; height: ${h}rem; transform: scale(${previewScale})`;
+  })();
+  $: activeSlide = slides[activeSlideIndex];
+
+
 
   let exportModalVisible = false;
   let importModalVisible = false;
@@ -50,10 +79,7 @@
     { type: "pdf", description: "chrome only" },
   ];
 
-  let settings: Settings = {
-    ratio: "",
-    theme: "default",
-  };
+
 
   let keybindings: { global: Keybind[], doc: Keybind[], editor: Keybind[] } = {
     global: [
@@ -135,31 +161,6 @@
       .reduce((a, b) => a.concat(b));
     return ret;
   }
-
-  function getScaledStyle(boundWidth: number, boundHeight: number): number {
-    let ratio = settings.ratio.split(":");
-    let frac = parseInt(ratio[1]) / parseInt(ratio[0]);
-
-    let width = Math.min(boundWidth, boundHeight / frac);
-
-    const w = 30; // rem
-    let px = w * parseFloat(getComputedStyle(document.documentElement).fontSize);
-    let scale = width / px;
-    return scale;
-  }
-
-  let previewScale = 1;
-
-  // computed
-  $: ratioStyle = (() => {
-    let x = settings.ratio.split(":");
-    let n = parseInt(x[1]),
-      d = parseInt(x[0]);
-    let w = 30, h = (w * n) / d;
-    return `width: ${w}rem; height: ${h}rem; transform: scale(${previewScale})`;
-  })();
-  $: activeSlide = slides[activeSlideIndex];
-  $: output = renderMarkdown(activeSlide.content);
 
   // mounted
   onMount(() => {
@@ -529,7 +530,7 @@
     </div>
     <div id="preview-pane" class="p-4 col-span-1">
       <h1 class="mb-4">Preview</h1>
-      {@html activeThemeOutput}
+      {@html generateScopedStyle(activeTheme, "#preview")}
       <div
         id="preview-wrapper"
         bind:this={previewWrapper}
@@ -542,7 +543,7 @@
           style={ratioStyle}
           on:click={nextSlide}
         >
-          {@html output}
+          {@html renderMarkdown(activeSlide.content)}
           <div class="slide-number">{activeSlideIndex+1}</div>
         </div>
       </div>
