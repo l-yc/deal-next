@@ -8,6 +8,7 @@ import "katex/dist/katex.min.css";
 import "katex/dist/contrib/mhchem.min.js";
 
 import DOMPurify from "dompurify";
+import type { AspectRatio } from "./DataTypes";
 
 // set up imports
 let marked_render = new marked.Renderer();
@@ -60,6 +61,28 @@ marked.setOptions({
   xhtml: false,
 });
 
-export default function renderMarkdown(s: string): string {
+function renderMarkdown(s: string): string {
   return DOMPurify.sanitize(marked(s));
 }
+
+function getRatioStyle(aspectRatio: AspectRatio, scale: number): string {
+  let x = aspectRatio.split(":");
+  let n = parseInt(x[1]),
+    d = parseInt(x[0]);
+  let w = 30, h = (w * n) / d;
+  return `width: ${w}rem; height: ${h}rem; transform: scale(${scale})`;
+};
+
+function getScaledStyle(aspectRatio: AspectRatio, boundWidth: number, boundHeight: number): number {
+  let ratio = aspectRatio.split(":");
+  let frac = parseInt(ratio[1]) / parseInt(ratio[0]);
+
+  let width = Math.min(boundWidth, boundHeight / frac);
+
+  const w = 30; // rem
+  let px = w * parseFloat(getComputedStyle(document.documentElement).fontSize);
+  let scale = width / px;
+  return scale;
+}
+
+export { renderMarkdown, getRatioStyle, getScaledStyle };

@@ -2,7 +2,7 @@
   import { onMount } from "svelte";
 
   import Modal from "./lib/Modal.svelte";
-  import renderMarkdown from "./lib/Renderer";
+  import { renderMarkdown, getRatioStyle, getScaledStyle as getBoundedScale } from "./lib/Renderer";
   import type { Theme } from "./lib/Theme";
   import { themes, generateScopedStyle } from "./lib/Theme";
   import type { Keybind } from "./lib/Keybindings";
@@ -44,27 +44,11 @@
   let activeSlideIndex = 0;
   let activeTheme: Theme = themes.default;
 
-  function getScaledStyle(boundWidth: number, boundHeight: number): number {
-    let ratio = settings.ratio.split(":");
-    let frac = parseInt(ratio[1]) / parseInt(ratio[0]);
 
-    let width = Math.min(boundWidth, boundHeight / frac);
 
-    const w = 30; // rem
-    let px = w * parseFloat(getComputedStyle(document.documentElement).fontSize);
-    let scale = width / px;
-    return scale;
-  }
-
+  // ratio and sizing
   let previewScale = 1;
-
-  $: ratioStyle = (() => {
-    let x = settings.ratio.split(":");
-    let n = parseInt(x[1]),
-      d = parseInt(x[0]);
-    let w = 30, h = (w * n) / d;
-    return `width: ${w}rem; height: ${h}rem; transform: scale(${previewScale})`;
-  })();
+  $: ratioStyle = getRatioStyle(settings.ratio, previewScale);
   $: activeSlide = slides[activeSlideIndex];
 
 
@@ -155,7 +139,11 @@
       let elem = event.target;
       let isFullscreen = document.fullscreenElement === elem;
       if (isFullscreen)
-        previewScale = getScaledStyle(previewWrapper.offsetWidth, previewWrapper.offsetHeight);
+        previewScale = getBoundedScale(
+          settings.ratio, 
+          previewWrapper.offsetWidth, 
+          previewWrapper.offsetHeight
+        );
       else
         previewScale = 1;
     }

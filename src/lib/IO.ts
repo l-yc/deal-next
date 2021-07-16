@@ -1,5 +1,5 @@
 import { generateScopedStyle, Theme } from "./Theme";
-import renderMarkdown from "./Renderer";
+import { renderMarkdown } from "./Renderer";
 import type { Settings, Slide } from "./DataTypes";
 
 import FileSaver from "file-saver";
