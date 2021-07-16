@@ -8,6 +8,8 @@
   import { registerDocumentKeybindings } from "./lib/Keybindings";
   import { exportSlides_ } from "./lib/IO";
 
+  import type { Slide, Settings } from "./lib/DataTypes";
+
   import * as _ from "lodash";
 
   import { basicSetup, EditorState, EditorView } from "@codemirror/basic-setup";
@@ -31,7 +33,7 @@
   // data
   let cm = null as EditorView | null;
   let title = "Untitled";
-  let slides = [{ content: "", notes: "" }];
+  let slides: Slide[] = [{ content: "", notes: "" }];
   for (let i = 0; i < 5; ++i) slides.push({ content: "# " + i, notes: ""});
   let activeSlideIndex = 0;
 
@@ -48,7 +50,7 @@
     { type: "pdf", description: "chrome only" },
   ];
 
-  let settings = {
+  let settings: Settings = {
     ratio: "",
     theme: "default",
   };
