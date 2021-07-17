@@ -12,11 +12,12 @@ import type { AspectRatio } from "./DataTypes";
 
 // set up imports
 let marked_render = new marked.Renderer();
-let old_paragraph = marked_render.paragraph;
-marked_render.paragraph = function (text: string) {
+let old_text = marked_render.text;
+marked_render.text = function (text: string) {
   var isTeXInline = /\$(.*)\$/g.test(text);
   var isTeXLine = /^\$\$(\s*.*\s*)\$\$$/.test(text);
 
+  console.log(text, isTeXInline, isTeXLine);
   if (!isTeXLine && isTeXInline) {
     text = text.replace(
       /(\$([^\$]*)\$)+/g,
@@ -37,10 +38,10 @@ marked_render.paragraph = function (text: string) {
     let raw = text.replace(/\$/g, "").replace(/[^\\](%)/g, (match) => {
       return match[0] + "\\" + "%";
     });
-    text = katex.renderToString(raw, { throwOnError: false });
+    text = katex.renderToString(raw, { throwOnError: false, displayMode: true });
   }
   // apply old renderer
-  text = old_paragraph(text);
+  text = old_text(text);
   return text;
 };
 

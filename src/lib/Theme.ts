@@ -14,8 +14,8 @@ li {
   list-style: disc inside;
 }
 
-li > * {
-  margin-left: 1.6rem;
+li > ul, li > ol {
+  margin-left: 1rem;
 }
 
 .slide-footer {
