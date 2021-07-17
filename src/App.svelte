@@ -97,6 +97,11 @@
         description: "Save slide (debugging feature)",
         run: () => saveSlides(),
       },
+      {
+        keys: ["Ctrl-o"],
+        description: "Open slide (debugging feature)",
+        run: () => openSlides(),
+      },
     ],
 
     doc: [
@@ -248,6 +253,23 @@
     }
 
     window.localStorage.setItem(key, JSON.stringify(backup));
+  }
+
+  function openSlides() {
+    let backup = {
+      meta: meta,
+      settings: settings,
+      slides: slides,
+    };
+
+    let key: string = window.prompt("(DBG) Enter key:");
+    let data = window.localStorage.getItem(key);
+    if (!data) {
+      alert("Invalid key");
+      return;
+    }
+
+    ({ meta, settings, slides } = JSON.parse(data));
   }
 
   function showExportSlidesModal() {
