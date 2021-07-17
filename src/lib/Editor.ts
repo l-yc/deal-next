@@ -1,5 +1,7 @@
 import { basicSetup, EditorState, EditorView } from "@codemirror/basic-setup";
+import { EditorSelection } from "@codemirror/state";
 import { ViewUpdate, keymap } from "@codemirror/view";
+import { defaultTabBinding } from "@codemirror/commands";
 import type { Keybind } from "./Keybindings";
 
 function transformKeybindingsForEditor(keybindings: Keybind[]) {
@@ -20,9 +22,50 @@ function transformKeybindingsForEditor(keybindings: Keybind[]) {
   return ret;
 }
 
+const bold = {
+  key: "Ctrl-Alt-b",
+  description: "bold",
+  run: (view: EditorView): boolean => {
+    view.dispatch(view.state.changeByRange(range => ({
+      changes: [{ from: range.from, insert: "**" }, { from: range.to, insert: "**" }],
+      range: EditorSelection.range(range.from + 2, range.to + 2)
+    })))
+    return true;
+  },
+}
+
+const italics = {
+  key: "Ctrl-Alt-i",
+  description: "italics",
+  run: (view: EditorView): boolean => {
+    console.log(view.state.selection.ranges.map);
+
+    view.dispatch(view.state.changeByRange(range => ({
+      changes: [{ from: range.from, insert: "*" }, { from: range.to, insert: "*" }],
+      range: EditorSelection.range(range.from + 1, range.to + 1)
+    })))
+    return true;
+  },
+}
+
+const strikethrough = {
+  key: "Ctrl-Alt-x",
+  description: "strikethrough",
+  run: (view: EditorView): boolean => {
+    console.log(view.state.selection.ranges.map);
+
+    view.dispatch(view.state.changeByRange(range => ({
+      changes: [{ from: range.from, insert: "~" }, { from: range.to, insert: "~" }],
+      range: EditorSelection.range(range.from + 1, range.to + 1)
+    })))
+    return true;
+  },
+}
+
+
 
 function createEditor(
-  editor: Element, 
+  editor: Element,
   updateCurrentSlide: any,
   keybindings: Keybind[]
 ): EditorView {
@@ -59,7 +102,13 @@ function createEditor(
             }
           },
         }),
-        keymap.of(transformKeybindingsForEditor(keybindings)),
+        keymap.of([
+          defaultTabBinding,
+          bold,
+          italics,
+          strikethrough,
+          ...transformKeybindingsForEditor(keybindings)
+        ]),
       ],
     }),
   });
