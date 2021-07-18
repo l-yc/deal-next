@@ -18,6 +18,10 @@ li > ul, li > ol {
   margin-left: 1rem;
 }
 
+.fmt-highlight {
+  background-color: yellow;
+}
+
 .slide-footer {
   position: absolute;
   left: 0.5rem;

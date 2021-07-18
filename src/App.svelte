@@ -374,7 +374,8 @@
         <Modal on:close={closeHelpModal}>
           <div slot="header">Help</div>
           <div slot="body" class="overflow-y-auto" style="max-height: 60vh">
-            Press <pre class="inline rounded bg-gray-100 p-1 text-xs">Esc</pre> to restore normal keybindings when in the editor
+            Press <pre class="inline rounded bg-gray-100 p-1 text-xs">Esc</pre> to restore normal keybindings when in the editor.
+            Use \newline instead of \\.
             {#each Object.entries(keybindings) as [typ, kbg]}
               <h3 class="font-semi-bold ml-2">{typ}</h3>
               <ul class="p-2">

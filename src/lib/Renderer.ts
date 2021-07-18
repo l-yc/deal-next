@@ -4,7 +4,7 @@ import hljs from "highlight.js";
 import "highlight.js/styles/github.css";
 
 import katex from "katex";
-import "katex/dist/katex.min.css";
+//import "katex/dist/katex.min.css"; // FIXME: doesn't work because fonts are not loading
 import "katex/dist/contrib/mhchem.min.js";
 
 import DOMPurify from "dompurify";
@@ -17,7 +17,6 @@ marked_render.text = function (text: string) {
   var isTeXInline = /\$(.*)\$/g.test(text);
   var isTeXLine = /^\$\$(\s*.*\s*)\$\$$/.test(text);
 
-  console.log(text, isTeXInline, isTeXLine);
   if (!isTeXLine && isTeXInline) {
     text = text.replace(
       /(\$([^\$]*)\$)+/g,
@@ -40,8 +39,28 @@ marked_render.text = function (text: string) {
     });
     text = katex.renderToString(raw, { throwOnError: false, displayMode: true });
   }
+
+  //// my md extensions
+  //let regex = /\=\=(.*)\=\=/g;
+  //let isHighlight = regex.test(text);
+  //if (isHighlight) {
+  //  text = text.replace(regex, (_$1: string, $2: string) => {
+  //      // prevent conflict with code
+  //      if ($2.indexOf("<code>") >= 0 || $2.indexOf("</code>") >= 0) {
+  //        return $2;
+  //      } else {
+  //        let raw = $2.replace(/\=/g, "").replace(/[^\\](%)/g, (match) => {
+  //          return match[0] + "\\" + "%";
+  //        });
+  //        var html = `<span class="fmt-highlight">${raw}</span>`;
+  //        return html;
+  //      }
+  //    });
+  //}
+
   // apply old renderer
   text = old_text(text);
+
   return text;
 };
 
