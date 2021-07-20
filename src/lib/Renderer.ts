@@ -9,57 +9,75 @@ import "katex/dist/contrib/mhchem.min.js";
 
 import DOMPurify from "dompurify";
 import type { AspectRatio } from "./DataTypes";
+import _ from "lodash";
 
 // set up imports
 let marked_render = new marked.Renderer();
 let old_text = marked_render.text;
 marked_render.text = function (text: string) {
-  var isTeXInline = /\$(.*)\$/g.test(text);
-  var isTeXLine = /^\$\$(\s*.*\s*)\$\$$/.test(text);
-
-  if (!isTeXLine && isTeXInline) {
-    text = text.replace(
-      /(\$([^\$]*)\$)+/g,
-      function (_$1: string, $2: string) {
-        // prevent conflict with code
-        if ($2.indexOf("<code>") >= 0 || $2.indexOf("</code>") >= 0) {
-          return $2;
-        } else {
-          let raw = $2.replace(/\$/g, "").replace(/[^\\](%)/g, (match) => {
-            return match[0] + "\\" + "%";
-          });
-          var html = katex.renderToString(raw, { throwOnError: false });
-          return html;
-        }
-      }
-    );
-  } else if (isTeXLine) {
-    let raw = text.replace(/\$/g, "").replace(/[^\\](%)/g, (match) => {
-      return match[0] + "\\" + "%";
-    });
-    text = katex.renderToString(raw, { throwOnError: false, displayMode: true });
-  }
-
-  //// my md extensions
-  //let regex = /\=\=(.*)\=\=/g;
-  //let isHighlight = regex.test(text);
-  //if (isHighlight) {
-  //  text = text.replace(regex, (_$1: string, $2: string) => {
-  //      // prevent conflict with code
-  //      if ($2.indexOf("<code>") >= 0 || $2.indexOf("</code>") >= 0) {
-  //        return $2;
-  //      } else {
-  //        let raw = $2.replace(/\=/g, "").replace(/[^\\](%)/g, (match) => {
-  //          return match[0] + "\\" + "%";
-  //        });
-  //        var html = `<span class="fmt-highlight">${raw}</span>`;
-  //        return html;
-  //      }
-  //    });
-  //}
+  let re = /\=\=(.+?)\=\=/g;
+  text = text.replace(re, (match: string) => {
+    // potential issue: conflict with embedded code?
+    let expr = match.substr(2, match.length - 4);
+    console.log(expr);
+    return `<span class="fmt-highlight">${expr}</span>`;
+  });
 
   // apply old renderer
   text = old_text(text);
+  return text;
+};
+
+class LRU<T> {
+  max: number;
+  cache: Map<string, T>
+
+  constructor(max = 32) {
+      this.max = max;
+      this.cache = new Map();
+  }
+
+  get(key: string) {
+      let item = this.cache.get(key);
+      if (item) {
+          // refresh key
+          this.cache.delete(key);
+          this.cache.set(key, item);
+      }
+      return item;
+  }
+
+  set(key: string, val: T) {
+      // refresh key
+      if (this.cache.has(key)) this.cache.delete(key);
+      // evict oldest
+      else if (this.cache.size == this.max) this.cache.delete(this.first());
+      this.cache.set(key, val);
+  }
+
+  first() {
+      return this.cache.keys().next().value;
+  }
+}
+
+let dirtyCache = new LRU<string>();
+
+function renderKatex(text: string) {
+  let delimiters = [ 
+    { left: "$$", right: "$$", options: { displayMode: true } },
+    { left: "$", right: "$", options: { displayMode: false } },
+  ];
+
+  delimiters.forEach(d => {
+    let re = new RegExp(_.escapeRegExp(d.left) + ".+?" + _.escapeRegExp(d.right), "g");
+    text = text.replace(re, (match: string) => {
+      if (!dirtyCache.get(match)) {
+        let expr = match.substr(d.left.length, match.length - d.left.length - d.right.length);
+        dirtyCache.set(match, katex.renderToString(expr, { throwOnError: false, ...d.options }));
+      }
+      return dirtyCache.get(match);
+    });
+  });
 
   return text;
 };
@@ -82,7 +100,7 @@ marked.setOptions({
 });
 
 function renderMarkdown(s: string): string {
-  return DOMPurify.sanitize(marked(s));
+  return DOMPurify.sanitize(renderKatex(marked(s)));
 }
 
 function getRatioStyle(aspectRatio: AspectRatio, scale: number): string {

@@ -232,7 +232,7 @@
 
   function updateCurrentSlide(content: string) {
     activeSlide.content = content;
-    slides[activeSlideIndex] = activeSlide;
+    //slides[activeSlideIndex] = activeSlide; // TEMPORARY FIX: updating this renders all slide preview instead of only this slide
   }
 
   function toggleFullscreen() {

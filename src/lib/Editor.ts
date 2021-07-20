@@ -3,6 +3,7 @@ import { EditorSelection } from "@codemirror/state";
 import { ViewUpdate, keymap } from "@codemirror/view";
 import { defaultTabBinding } from "@codemirror/commands";
 import type { Keybind } from "./Keybindings";
+import _ from "lodash";
 
 function transformKeybindingsForEditor(keybindings: Keybind[]) {
   let ret = keybindings
@@ -69,6 +70,8 @@ function createEditor(
   updateCurrentSlide: any,
   keybindings: Keybind[]
 ): EditorView {
+  let debouncedUpdate = _.debounce(updateCurrentSlide, 100);
+
   return new EditorView({
     parent: editor,
     state: EditorState.create({
@@ -77,7 +80,7 @@ function createEditor(
         basicSetup,
         EditorView.updateListener.of((v: ViewUpdate) => {
           if (v.docChanged) {
-            updateCurrentSlide(v.state.doc.toString());
+            debouncedUpdate(v.state.doc.toString())
           }
         }),
         EditorView.domEventHandlers({
