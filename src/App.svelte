@@ -1,8 +1,9 @@
 <script lang="ts">
   import { onMount } from "svelte";
 
-  import Modal from "./lib/Modal.svelte";
-  import { renderMarkdown, getRatioStyle, getScaledStyle as getBoundedScale } from "./lib/Renderer";
+  import Modal from "./components/Modal.svelte";
+  import SlidePreview from "./components/SlidePreview.svelte";
+  import { getRatioStyle, getScaledStyle as getBoundedScale } from "./lib/Renderer";
   import type { Theme } from "./lib/Theme";
   import { themes, generateScopedStyle } from "./lib/Theme";
   import type { Keybind } from "./lib/Keybindings";
@@ -28,7 +29,6 @@
   // refs
   let importedSlides: HTMLInputElement,
     editor: Element,
-    preview: HTMLElement,
     previewWrapper: HTMLElement;
 
   // config
@@ -52,7 +52,6 @@
 
   // ratio and sizing
   let previewScale = 1;
-  $: ratioStyle = getRatioStyle(settings.ratio, previewScale);
   $: activeSlide = slides[activeSlideIndex];
 
 
@@ -510,36 +509,25 @@
         bind:this={previewWrapper}
         class="flex flex-col items-center justify-center"
       >
-        <div
-          id="preview"
-          class="slide {activeSlideIndex === 0 ? 'first' : ''}"
-          bind:this={preview}
-          style={ratioStyle}
-          on:click={nextSlide}
-        >
-          {@html renderMarkdown(activeSlide.content)}
-          <div class="slide-footer">
-            <div class="slide-footer-text">{meta.title} / {meta.author}</div>
-            <div class="slide-number">{activeSlideIndex+1}</div>
-          </div>
-        </div>
+        <SlidePreview 
+          style={getRatioStyle(settings.ratio, previewScale)}
+          content={activeSlide.content}
+          meta={meta}
+          index={activeSlideIndex+1}
+        />
       </div>
 
       <!-- slide preview bar -->
       <div class="relative overflow-x-auto" style="height: 8rem">
-        {@html generateScopedStyle(activeTheme, ".slide-preview")}
+        {@html generateScopedStyle(activeTheme, ".slide-nav")}
         {#each slides as slide, slideIndex}
-          <div 
-            class="slide {activeSlideIndex === 0 ? 'first' : ''} slide-preview absolute border-grey border-2 flex-shrink-0"
-            style="{ratioStyle}; top: 2rem; left: {slideIndex*10}rem; transform: scale(0.2); transform-origin: left top;"
-            on:click={() => loadSlide(slideIndex)}
-          >
-            {@html renderMarkdown(slide.content)}
-            <div class="slide-footer">
-              <div class="slide-footer-text">{meta.title} / {meta.author}</div>
-              <div class="slide-number">{activeSlideIndex+1}</div>
-            </div>
-          </div>
+          <SlidePreview 
+            style={getRatioStyle(settings.ratio, 0.2) + `; top: 2rem; left: ${slideIndex*10}rem; transform-origin: left top;`}
+            content={slide.content}
+            meta={meta}
+            index={slideIndex+1}
+            isNav={true}
+          />
         {/each}
       </div>
     </div>
@@ -558,13 +546,5 @@
 
   .btn-icon {
     @apply flex flex-row;
-  }
-
-  #preview {
-    @apply border-2 border-black;
-  }
-
-  .slide-preview {
-    @apply cursor-pointer hover:(filter brightness-90);
   }
 </style>
