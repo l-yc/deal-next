@@ -495,11 +495,11 @@
   <div id="workspace" class="flex-1 grid grid-cols-2 gap-4">
     <div id="editor-pane" class="p-4 col-span-1">
       <h1 class="mb-4">Editor</h1>
-      <div class="border-2 border-black">
+      <div class=" border-black">
         <div class="flex">
-          <button class="btn" on:click={() => {editorTab = 'content'}}>Content</button>
-          <button class="btn" on:click={() => {editorTab = 'notes'}}>Notes</button>
-          <button class="btn" on:click={() => {editorTab = 'style'}}>Style</button>
+          <div class="tab {editorTab === 'content' ? 'active': ''}" on:click={() => {editorTab = 'content'}}>Content</div>
+          <div class="tab {editorTab === 'notes' ? 'active': ''}" on:click={() => {editorTab = 'notes'}}>Notes</div>
+          <div class="tab {editorTab === 'style' ? 'active': ''}" on:click={() => {editorTab = 'style'}}>Style</div>
         </div>
         <div style={editorTab != 'content' ? 'display:none;' : ''} class="" bind:this={editor}></div>
         <div style={editorTab != 'notes' ? 'display:none;' : ''} class="" bind:this={editorNotes}></div>
@@ -537,7 +537,7 @@
       <div class="relative overflow-x-auto" style="height: 8rem">
         {#each $slides as slide, slideIndex}
           <SlidePreview 
-            style={getRatioStyle($settings.ratio, 0.2) + `; top: 2rem; left: ${slideIndex*10}rem; transform-origin: left top;`}
+            style={getRatioStyle($settings.ratio, 0.2) + `; top: 2rem; left: ${slideIndex*7}rem; transform-origin: left top;`}
             content={slide.content}
             index={slideIndex+1}
             isNav={true}
@@ -561,6 +561,14 @@
 
   .btn-icon {
     @apply flex flex-row;
+  }
+
+  .tab {
+    @apply py-2 px-4 hover:bg-gray-100 hover:cursor-pointer;
+  }
+
+  .tab.active {
+    @apply font-semibold;
   }
 
   .dropdown {

@@ -14,29 +14,23 @@ import _ from "lodash";
 import { get } from 'svelte/store';
 import { meta } from "./Stores";
 
-function parseHighlight(text: string) {
-  let re = /\=\=(.+?)\=\=/g;
-  text = text.replace(re, (match: string) => {
-    // potential issue: conflict with embedded code?
-    let expr = match.substr(2, match.length - 4);
-    console.log(expr);
-    return `<span class="fmt-highlight">${expr}</span>`;
-  });
-  return text;
-}
-
-function parseKeywords(text: string) {
+function custom_processor(text: string) {
   const { title, author } = get(meta);
   const date = (new Date()).toLocaleDateString('en-SG');
-  [
-    [/\\title/g, title],
-    [/\\author/g, author],
-    [/\\date/g, date],
-    [/\\maketitle/g, `<h1>${title}</h1><h2>${author}</h2><h3>${date}</h3>`],
-  ].forEach(it => {
-    text = text.replace(it[0], (_) => {
-      return it[1] as string;
-    });
+  const map: [RegExp, (_: any) => string][] = [
+    // FIXME potential issue: conflict with embedded code?
+    [/\=\=(.+?)\=\=/g, (match: string) => {
+      let expr = match.substr(2, match.length - 4);
+      console.log(expr);
+      return `<span class="fmt-highlight">${expr}</span>`;
+    }],
+    [/\\title/g, (_) => title as string],
+    [/\\author/g, (_) => author as string],
+    [/\\date/g, (_) => date],
+    [/\\maketitle/g, (_) => `<h1>${title}</h1><h2>${author}</h2><h3>${date}</h3>`],
+  ];
+  map.forEach(it => {
+    text = text.replace(it[0], it[1]);
   });
   return text;
 }
@@ -45,8 +39,7 @@ function parseKeywords(text: string) {
 let marked_render = new marked.Renderer();
 let old_text = marked_render.text;
 marked_render.text = function (text: string) {
-  text = parseHighlight(text);
-  text = parseKeywords(text);
+  text = custom_processor(text);
   // apply old renderer
   text = old_text(text);
   return text;

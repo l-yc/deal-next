@@ -31,6 +31,6 @@
   }
 
   .slide-nav {
-    @apply absolute border-grey border-2 flex-shrink-0 cursor-pointer hover:(filter brightness-90);
+    @apply absolute flex-shrink-0 cursor-pointer hover:(filter brightness-90);
   }
 </style>
