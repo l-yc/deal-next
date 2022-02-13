@@ -49,12 +49,15 @@ slide.slide-1 h2 {
 slide.slide-1 h3 {
   font-size: 1rem;
   text-align: center;
-  margin-top: 1rem;
 }
 
 /* MARK: elements */
 h1 {
   font-size: 1.6rem;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 1rem;
 }
 
 li {

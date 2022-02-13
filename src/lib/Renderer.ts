@@ -17,17 +17,20 @@ import { meta } from "./Stores";
 function custom_processor(text: string) {
   const { title, author } = get(meta);
   const date = (new Date()).toLocaleDateString('en-SG');
-  const map: [RegExp, (_: any) => string][] = [
+  const map: [RegExp, (match: string) => string][] = [
     // FIXME potential issue: conflict with embedded code?
-    [/\=\=(.+?)\=\=/g, (match: string) => {
-      let expr = match.substr(2, match.length - 4);
-      console.log(expr);
+    [/\=\=(.+?)\=\=/g, (match) => {
+      const expr = match.substr(2, match.length - 4);
       return `<span class="fmt-highlight">${expr}</span>`;
     }],
     [/\\title/g, (_) => title as string],
     [/\\author/g, (_) => author as string],
     [/\\date/g, (_) => date],
     [/\\maketitle/g, (_) => `<h1>${title}</h1><h2>${author}</h2><h3>${date}</h3>`],
+    [/\{\{(.+?)\}\}/g, (match) => {
+      const expr = match.substr(2, match.length - 4);
+      return `<div style="height:${expr}"></div>`
+    }],
   ];
   map.forEach(it => {
     text = text.replace(it[0], it[1]);
