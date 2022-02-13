@@ -530,7 +530,7 @@
         {@html generateScopedStyle(activeTheme, ".slide-preview")}
         {#each slides as slide, slideIndex}
           <div 
-            class="absolute slide-preview border-grey border-2 flex-shrink-0"
+            class="slide {activeSlideIndex === 0 ? 'first' : ''} slide-preview absolute border-grey border-2 flex-shrink-0"
             style="{ratioStyle}; top: 2rem; left: {slideIndex*10}rem; transform: scale(0.2); transform-origin: left top;"
             on:click={() => loadSlide(slideIndex)}
           >
