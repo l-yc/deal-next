@@ -10,7 +10,6 @@
   import { registerDocumentKeybindings } from "./lib/Keybindings";
   import { exportSlides_, exportTypes, importSlides_ } from "./lib/IO";
 
-  import type { Slide, Settings, Meta } from "./lib/DataTypes";
   import { createEditor } from "./lib/Editor";
   import type { EditorView } from "@codemirror/basic-setup";
 
@@ -26,33 +25,21 @@
     upload,
   } from "@martinse/svelte-heroicons/dist/solid";
 
+  import { meta, settings, slides } from "./lib/Stores";
+
   // refs
   let importedSlides: HTMLInputElement,
     editor: Element,
     previewWrapper: HTMLElement;
 
-  // config
-  let meta: Meta = {
-    title: "Untitled",
-    author: "Anonymous",
-  };
-  let settings: Settings = {
-    ratio: "",
-    theme: "default",
-  };
-
   // user input data
   let cm = null as EditorView | null;
-  let slides: Slide[] = [{ content: "", notes: "" }];
-  //for (let i = 0; i < 5; ++i) slides.push({ content: "# " + i, notes: ""});
   let activeSlideIndex = 0;
   let activeTheme: Theme = themes.default;
 
-
-
   // ratio and sizing
   let previewScale = 1;
-  $: activeSlide = slides[activeSlideIndex];
+  $: activeSlide = $slides[activeSlideIndex];
 
 
 
@@ -134,7 +121,6 @@
 
   // mounted
   onMount(() => {
-    settings.ratio = "4:3";
     cm = createEditor(editor, updateCurrentSlide,
             keybindings.global.concat(keybindings.editor)
     );
@@ -144,7 +130,7 @@
       let isFullscreen = document.fullscreenElement === elem;
       if (isFullscreen)
         previewScale = getBoundedScale(
-          settings.ratio, 
+          $settings.ratio, 
           previewWrapper.offsetWidth, 
           previewWrapper.offsetHeight
         );
@@ -161,14 +147,14 @@
   }
 
   function nextSlide() {
-    if (activeSlideIndex < slides.length - 1) {
+    if (activeSlideIndex < $slides.length - 1) {
       loadSlide(activeSlideIndex + 1);
     }
   }
 
   function newSlide(slide = { content: "", notes: "" }) {
-    slides = [...slides, slide];
-    loadSlide(slides.length - 1);
+    $slides = [...$slides, slide];
+    loadSlide($slides.length - 1);
   }
 
   function duplicateSlide() {
@@ -177,9 +163,9 @@
   }
 
   function deleteSlide() {
-    slides = slides.filter((e, i) => i !== activeSlideIndex);
-    if (slides.length === 0) newSlide();
-    activeSlideIndex = Math.min(activeSlideIndex, slides.length-1);
+    $slides = $slides.filter((e, i) => i !== activeSlideIndex);
+    if ($slides.length === 0) newSlide();
+    activeSlideIndex = Math.min(activeSlideIndex, $slides.length-1);
     loadSlide(activeSlideIndex);
   }
 
@@ -190,7 +176,7 @@
       return;
     }
 
-    if (slideNo < 1 || slideNo > slides.length) {
+    if (slideNo < 1 || slideNo > $slides.length) {
       alert("Input out of range");
       return;
     }
@@ -206,20 +192,20 @@
       return;
     }
 
-    if (slideNo < 1 || slideNo > slides.length) {
+    if (slideNo < 1 || slideNo > $slides.length) {
       alert("Input out of range");
       return;
     }
     --slideNo;
 
-    slides.splice(slideNo, 0, slides.splice(activeSlideIndex, 1)[0]);
-    slides = slides; // trigger update
+    $slides.splice(slideNo, 0, $slides.splice(activeSlideIndex, 1)[0]);
+    $slides = $slides; // trigger update
     loadSlide(slideNo);
   }
 
   function loadSlide(slideNo: number) {
     activeSlideIndex = slideNo;
-    activeSlide = slides[slideNo]; // not sure why the reactivity is slow
+    activeSlide = $slides[slideNo]; // not sure why the reactivity is slow
     cm?.dispatch({
       changes: {
         from: 0,
@@ -231,7 +217,7 @@
 
   function updateCurrentSlide(content: string) {
     activeSlide.content = content;
-    //slides[activeSlideIndex] = activeSlide; // TEMPORARY FIX: updating this renders all slide preview instead of only this slide
+    //$slides[activeSlideIndex] = activeSlide; // TEMPORARY FIX: updating this renders all slide preview instead of only this slide
   }
 
   function toggleFullscreen() {
@@ -240,14 +226,14 @@
 
   function saveSlides() {
     let backup = {
-      meta: meta,
-      settings: settings,
-      slides: slides,
+      meta: $meta,
+      settings: $settings,
+      slides: $slides,
     };
 
-    let key = meta.title;
+    let key = backup.meta.title;
     if (window.localStorage.getItem(key) && 
-        !window.confirm(`Overwrite "${meta.title}"?`)) {
+        !window.confirm(`Overwrite "${key}"?`)) {
       return;
     }
 
@@ -255,12 +241,6 @@
   }
 
   function openSlides() {
-    let backup = {
-      meta: meta,
-      settings: settings,
-      slides: slides,
-    };
-
     let key: string = window.prompt("(DBG) Enter key:");
     let data = window.localStorage.getItem(key);
     if (!data) {
@@ -268,7 +248,7 @@
       return;
     }
 
-    ({ meta, settings, slides } = JSON.parse(data));
+    ({ $meta, $settings, $slides } = JSON.parse(data));
   }
 
   function showExportSlidesModal() {
@@ -280,7 +260,7 @@
   }
 
   function exportSlides(typ: string) {
-    exportSlides_(typ, meta, settings, slides, activeTheme);
+    exportSlides_(typ, $meta, $settings, $slides, activeTheme);
   }
 
   function showImportSlidesModal() {
@@ -294,7 +274,7 @@
   function importSlides() {
     importSlides_(importedSlides)
       .then(data => {
-        ({ meta, settings, slides } = data)
+        ({ $meta, $settings, $slides } = data)
         closeImportSlidesModal();
         loadSlide(0);
       })
@@ -404,8 +384,8 @@
 
     <div class="col-span-1 flex flex-row items-center justify-center">
       <input
-        bind:value={meta.title}
-        size={meta.title.length}
+        bind:value={$meta.title}
+        size={$meta.title.length}
         type="text"
         class="text-center border-b-2 border-black"
       />
@@ -418,11 +398,11 @@
           <div slot="body">
             <ul>
               <li>
-                <label for="meta.author" class="mr-2">Author:</label>
+                <label for="$meta.author" class="mr-2">Author:</label>
                 <input
-                  bind:value={meta.author}
-                  name="meta.author"
-                  size={meta.author.length}
+                  bind:value={$meta.author}
+                  name="$meta.author"
+                  size={$meta.author.length}
                   type="text"
                   class="text-center border-b-2 border-black"
                 />
@@ -449,20 +429,20 @@
           <div slot="body">
             <ul>
               <li>
-                <label for="settings.ratio" class="mr-2">Ratio:</label>
+                <label for="$settings.ratio" class="mr-2">Ratio:</label>
                 <input
-                  bind:value={settings.ratio}
-                  name="settings.ratio"
-                  size={settings.ratio.length}
+                  bind:value={$settings.ratio}
+                  name="$settings.ratio"
+                  size={$settings.ratio.length}
                   type="text"
                   class="text-center border-b-2 border-black"
                 />
               </li>
               <li>
-                <label for="settings.theme" class="mr-2">Theme:</label>
+                <label for="$settings.theme" class="mr-2">Theme:</label>
                 <select
-                  bind:value={settings.theme}
-                  name="settings.theme"
+                  bind:value={$settings.theme}
+                  name="$settings.theme"
                   class="
                     block
                     appearance-none
@@ -492,7 +472,7 @@
       {/if}
 
       <div class="px-4">
-        Slide: {activeSlideIndex + 1} / {slides.length}
+        Slide: {activeSlideIndex + 1} / {$slides.length}
       </div>
     </div>
   </div>
@@ -510,9 +490,8 @@
         class="flex flex-col items-center justify-center"
       >
         <SlidePreview 
-          style={getRatioStyle(settings.ratio, previewScale)}
+          style={getRatioStyle($settings.ratio, previewScale)}
           content={activeSlide.content}
-          meta={meta}
           index={activeSlideIndex+1}
         />
       </div>
@@ -520,13 +499,13 @@
       <!-- slide preview bar -->
       <div class="relative overflow-x-auto" style="height: 8rem">
         {@html generateScopedStyle(activeTheme, ".slide-nav")}
-        {#each slides as slide, slideIndex}
+        {#each $slides as slide, slideIndex}
           <SlidePreview 
-            style={getRatioStyle(settings.ratio, 0.2) + `; top: 2rem; left: ${slideIndex*10}rem; transform-origin: left top;`}
+            style={getRatioStyle($settings.ratio, 0.2) + `; top: 2rem; left: ${slideIndex*10}rem; transform-origin: left top;`}
             content={slide.content}
-            meta={meta}
             index={slideIndex+1}
             isNav={true}
+            on:click={(e) => loadSlide(slideIndex)}
           />
         {/each}
       </div>

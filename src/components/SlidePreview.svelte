@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { renderMarkdown } from "../lib/Renderer";
-
   import { createEventDispatcher } from 'svelte';
+
+  import { renderMarkdown } from "../lib/Renderer";
+  import { meta } from "../lib/Stores";
 
   const dispatch = createEventDispatcher();
   const click = () => dispatch('click');
 
   export let style: string;
   export let content: string;
-  export let meta: Record<string, any>;
   export let index: number;
   export let isNav: boolean = false;
 </script>
@@ -21,7 +21,7 @@
 >
   {@html renderMarkdown(content)}
   <div class="slide-footer">
-    <div class="slide-footer-text">{meta.title} / {meta.author}</div>
+    <div class="slide-footer-text">{$meta.title} / {$meta.author}</div>
     <div class="slide-number">{index}</div>
   </div>
 </div>
