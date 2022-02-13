@@ -1,11 +1,58 @@
 export type Theme = string;
 
-const themeDefault: Theme = `
+const themeDefault = `
+/* MARK: layout */
 slide {
   background-color: white;
   padding: 1rem;
 }
 
+.slide-footer {
+  position: absolute;
+  left: 0.5rem;
+  right: 0.5rem;
+  bottom: 0.25rem;
+  font-size: 0.75rem;
+  display: flex;
+  flex-flow: row;
+}
+
+.slide-footer-text {
+  flex: 1;
+}
+
+.slide-number {
+  margin-left: 0.5rem;
+}
+
+/* MARK: first slide stuff */
+slide.slide-1 .slide-footer-text {
+  visibility: hidden;
+}
+
+slide.slide-1 {
+  display: flex;
+  flex-flow: column;
+  justify-content: center;
+}
+
+slide.slide-1 h1 {
+  font-size: 2rem;
+  text-align: center;
+}
+
+slide.slide-1 h2 {
+  font-size: 1.2rem;
+  text-align: center;
+}
+
+slide.slide-1 h3 {
+  font-size: 1rem;
+  text-align: center;
+  margin-top: 1rem;
+}
+
+/* MARK: elements */
 h1 {
   font-size: 1.6rem;
 }
@@ -21,29 +68,7 @@ li > ul, li > ol {
 .fmt-highlight {
   background-color: yellow;
 }
-
-.slide-footer {
-  position: absolute;
-  left: 0.5rem;
-  right: 0.5rem;
-  bottom: 0.25rem;
-  font-size: 0.75rem;
-  display: flex;
-  flex-flow: row;
-}
-
-slide.slide-1 .slide-footer-text {
-  visibility: hidden;
-}
-
-.slide-footer-text {
-  flex: 1;
-}
-
-.slide-number {
-  margin-left: 0.5rem;
-}
-`;
+`
 
 const themes = {
   default: themeDefault,

@@ -13,7 +13,7 @@ export const settings = writable({
 } as Settings);
 
 export const slides = writable([
-  { content: "", notes: "", style: "" },
+  { content: "\\maketitle", notes: "", style: "" },
 ] as Slide[]);
 
 //for (let i = 0; i < 5; ++i) slides.push({ content: "# " + i, notes: ""});

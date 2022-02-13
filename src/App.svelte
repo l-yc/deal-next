@@ -23,6 +23,7 @@
     informationCircle,
     documentDownload,
     upload,
+    refresh,
   } from "@martinse/svelte-heroicons/dist/solid";
 
   import { meta, settings, slides } from "./lib/Stores";
@@ -76,6 +77,8 @@
       else
         previewScale = 1;
     }
+    
+    loadSlide(0);
   });
 
   const keybindings: { global: Keybind[], doc: Keybind[], editor: Keybind[] } = {
@@ -507,12 +510,16 @@
       {@html generateScopedStyle(activeTheme, ".slide")}
       {#each $slides as slide, slideIndex}
         {#if slide.style}
-          {generateScopedStyle(slide.style, `.slide-${slideIndex+1}`)}
           {@html generateScopedStyle(slide.style, `.slide-${slideIndex+1}`)}
         {/if}
       {/each}
 
-      <h1 class="mb-4">Preview</h1>
+      <h1 class="mb-4 flex items-center">
+        Preview
+        <!--<button class="ml-1 p-1 rounded hover:bg-gray-100 flex items-center" on:click={(e) => refreshSlide()}>
+          <Heroicon icon={refresh} class="h-5 w-5" />
+        </button>-->
+      </h1>
       <div
         id="preview-wrapper"
         bind:this={previewWrapper}
