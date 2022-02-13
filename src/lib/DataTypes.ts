@@ -1,7 +1,7 @@
 export type Slide = {
   content: string;
   notes: string;
-  style: string;
+  style?: string;
 }
 
 function newSlideObject(): Slide {

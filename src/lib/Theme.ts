@@ -32,7 +32,7 @@ li > ul, li > ol {
   flex-flow: row;
 }
 
-slide.first .slide-footer-text {
+slide.slide-1 .slide-footer-text {
   visibility: hidden;
 }
 

@@ -35,13 +35,11 @@
   // user input data
   let cm = null as EditorView | null;
   let activeSlideIndex = 0;
-  let activeTheme: Theme = themes.default;
+  $: activeSlide = $slides[activeSlideIndex];
+  $: activeTheme = themes[$settings.theme] as Theme;
 
   // ratio and sizing
   let previewScale = 1;
-  $: activeSlide = $slides[activeSlideIndex];
-
-
 
   let exportModalVisible = false;
   let importModalVisible = false;
@@ -49,9 +47,27 @@
   let metaModalVisible = false;
   let settingsModalVisible = false;
 
+  // mounted
+  onMount(() => {
+    cm = createEditor(editor, updateCurrentSlide,
+            keybindings.global.concat(keybindings.editor)
+    );
 
+    previewWrapper.onfullscreenchange = (event) => {
+      let elem = event.target;
+      let isFullscreen = document.fullscreenElement === elem;
+      if (isFullscreen)
+        previewScale = getBoundedScale(
+          $settings.ratio, 
+          previewWrapper.offsetWidth, 
+          previewWrapper.offsetHeight
+        );
+      else
+        previewScale = 1;
+    }
+  });
 
-  let keybindings: { global: Keybind[], doc: Keybind[], editor: Keybind[] } = {
+  const keybindings: { global: Keybind[], doc: Keybind[], editor: Keybind[] } = {
     global: [
       {
         keys: ["Ctrl-Alt-n"],
@@ -119,57 +135,37 @@
 
   registerDocumentKeybindings(keybindings.global.concat(keybindings.doc));
 
-  // mounted
-  onMount(() => {
-    cm = createEditor(editor, updateCurrentSlide,
-            keybindings.global.concat(keybindings.editor)
-    );
-
-    previewWrapper.onfullscreenchange = (event) => {
-      let elem = event.target;
-      let isFullscreen = document.fullscreenElement === elem;
-      if (isFullscreen)
-        previewScale = getBoundedScale(
-          $settings.ratio, 
-          previewWrapper.offsetWidth, 
-          previewWrapper.offsetHeight
-        );
-      else
-        previewScale = 1;
-    }
-  });
-
   // methods
-  function prevSlide() {
+  export function prevSlide() {
     if (activeSlideIndex > 0) {
       loadSlide(activeSlideIndex - 1);
     }
   }
 
-  function nextSlide() {
+  export function nextSlide() {
     if (activeSlideIndex < $slides.length - 1) {
       loadSlide(activeSlideIndex + 1);
     }
   }
 
-  function newSlide(slide = { content: "", notes: "" }) {
+  export function newSlide(slide = { content: "", notes: "" }) {
     $slides = [...$slides, slide];
     loadSlide($slides.length - 1);
   }
 
-  function duplicateSlide() {
+  export function duplicateSlide() {
     let dup = _.cloneDeep(activeSlide);
     newSlide(dup);
   }
 
-  function deleteSlide() {
+  export function deleteSlide() {
     $slides = $slides.filter((e, i) => i !== activeSlideIndex);
     if ($slides.length === 0) newSlide();
     activeSlideIndex = Math.min(activeSlideIndex, $slides.length-1);
     loadSlide(activeSlideIndex);
   }
 
-  function gotoSlide() {
+  export function gotoSlide() {
     let slideNo: number = parseInt(window.prompt("Enter slide number:"));
     if (isNaN(slideNo)) {
       alert("Input must be a number")
@@ -185,7 +181,7 @@
     loadSlide(slideNo);
   }
 
-  function moveSlide() {
+  export function moveSlide() {
     let slideNo: number = parseInt(window.prompt("Enter slide number:"));
     if (isNaN(slideNo)) {
       alert("Input must be a number")
@@ -203,7 +199,7 @@
     loadSlide(slideNo);
   }
 
-  function loadSlide(slideNo: number) {
+  export function loadSlide(slideNo: number) {
     activeSlideIndex = slideNo;
     activeSlide = $slides[slideNo]; // not sure why the reactivity is slow
     cm?.dispatch({
@@ -248,7 +244,11 @@
       return;
     }
 
-    ({ $meta, $settings, $slides } = JSON.parse(data));
+    const parsed = JSON.parse(data);
+    $meta = parsed.meta;
+    $settings = parsed.settings;
+    $slides = parsed.slides;
+    loadSlide(0);
   }
 
   function showExportSlidesModal() {
@@ -274,7 +274,9 @@
   function importSlides() {
     importSlides_(importedSlides)
       .then(data => {
-        ({ $meta, $settings, $slides } = data)
+        $meta = data.meta;
+        $settings = data.settings;
+        $slides = data.slides;
         closeImportSlidesModal();
         loadSlide(0);
       })
@@ -464,12 +466,14 @@
   <div id="workspace" class="flex-1 grid grid-cols-2 gap-4">
     <div id="editor-pane" class="p-4 col-span-1">
       <h1 class="mb-4">Editor</h1>
-      <div bind:this={editor} />
+      <div class="border-2 border-black" bind:this={editor} />
     </div>
     <div id="preview-pane" class="p-4 col-span-1">
       {@html generateScopedStyle(activeTheme, ".slide")}
       {#each $slides as slide, slideIndex}
-        {@html generateScopedStyle(slide.style, `.slide-${slideIndex}`)}
+        {#if slide.style}
+          {@html generateScopedStyle(slide.style, `.slide-${slideIndex}`)}
+        {/if}
       {/each}
 
       <h1 class="mb-4">Preview</h1>
