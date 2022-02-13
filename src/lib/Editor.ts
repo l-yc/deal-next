@@ -67,6 +67,7 @@ const strikethrough = {
 
 function createEditor(
   editor: Element,
+  name: 'content' | 'notes' | 'style',
   updateCurrentSlide: any,
   keybindings: Keybind[]
 ): EditorView {
@@ -80,7 +81,7 @@ function createEditor(
         basicSetup,
         EditorView.updateListener.of((v: ViewUpdate) => {
           if (v.docChanged) {
-            debouncedUpdate(v.state.doc.toString())
+            debouncedUpdate(name, v.state.doc.toString())
           }
         }),
         EditorView.domEventHandlers({

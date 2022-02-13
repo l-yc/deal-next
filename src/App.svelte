@@ -30,10 +30,15 @@
   // refs
   let importedSlides: HTMLInputElement,
     editor: Element,
+    editorNotes: Element,
+    editorStyle: Element,
     previewWrapper: HTMLElement;
 
   // user input data
   let cm = null as EditorView | null;
+  let cmNotes = null as EditorView | null;
+  let cmStyle = null as EditorView | null;
+  let editorTab = 'content';
   let activeSlideIndex = 0;
   $: activeSlide = $slides[activeSlideIndex];
   $: activeTheme = themes[$settings.theme] as Theme;
@@ -49,8 +54,14 @@
 
   // mounted
   onMount(() => {
-    cm = createEditor(editor, updateCurrentSlide,
-            keybindings.global.concat(keybindings.editor)
+    cm = createEditor(editor, 'content', updateCurrentSlide,
+        keybindings.global.concat(keybindings.editor)
+    );
+    cmNotes = createEditor(editorNotes, 'notes', updateCurrentSlide,
+        keybindings.global.concat(keybindings.editor)
+    );
+    cmStyle = createEditor(editorStyle, 'style', updateCurrentSlide,
+        keybindings.global.concat(keybindings.editor)
     );
 
     previewWrapper.onfullscreenchange = (event) => {
@@ -209,10 +220,25 @@
         insert: activeSlide.content,
       },
     });
+    cmNotes?.dispatch({
+      changes: {
+        from: 0,
+        to: cmNotes.state.doc.length,
+        insert: activeSlide.notes,
+      },
+    });
+    cmStyle?.dispatch({
+      changes: {
+        from: 0,
+        to: cmStyle.state.doc.length,
+        insert: activeSlide.style,
+      },
+    });
   }
 
-  function updateCurrentSlide(content: string) {
-    activeSlide.content = content;
+  function updateCurrentSlide(key: 'content' | 'notes' | 'style', data: string) {
+    activeSlide[key] = data;
+    activeSlide = activeSlide; // trigger update
     //$slides[activeSlideIndex] = activeSlide; // TEMPORARY FIX: updating this renders all slide preview instead of only this slide
   }
 
@@ -466,13 +492,23 @@
   <div id="workspace" class="flex-1 grid grid-cols-2 gap-4">
     <div id="editor-pane" class="p-4 col-span-1">
       <h1 class="mb-4">Editor</h1>
-      <div class="border-2 border-black" bind:this={editor} />
+      <div class="border-2 border-black">
+        <div class="flex">
+          <button class="btn" on:click={() => {editorTab = 'content'}}>Content</button>
+          <button class="btn" on:click={() => {editorTab = 'notes'}}>Notes</button>
+          <button class="btn" on:click={() => {editorTab = 'style'}}>Style</button>
+        </div>
+        <div style={editorTab != 'content' ? 'display:none;' : ''} class="" bind:this={editor}></div>
+        <div style={editorTab != 'notes' ? 'display:none;' : ''} class="" bind:this={editorNotes}></div>
+        <div style={editorTab != 'style' ? 'display:none;' : ''} class="" bind:this={editorStyle}></div>
+      </div>
     </div>
     <div id="preview-pane" class="p-4 col-span-1">
       {@html generateScopedStyle(activeTheme, ".slide")}
       {#each $slides as slide, slideIndex}
         {#if slide.style}
-          {@html generateScopedStyle(slide.style, `.slide-${slideIndex}`)}
+          {generateScopedStyle(slide.style, `.slide-${slideIndex+1}`)}
+          {@html generateScopedStyle(slide.style, `.slide-${slideIndex+1}`)}
         {/if}
       {/each}
 
