@@ -1,12 +1,14 @@
 export type Slide = {
   content: string;
   notes: string;
+  style: string;
 }
 
 function newSlideObject(): Slide {
   return {
     content: '',
     notes: '',
+    style: '',
   };
 }
 

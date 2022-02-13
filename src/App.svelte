@@ -443,22 +443,7 @@
                 <select
                   bind:value={$settings.theme}
                   name="$settings.theme"
-                  class="
-                    block
-                    appearance-none
-                    w-full
-                    bg-white
-                    border border-gray-400
-                    hover:border-gray-500
-                    px-4
-                    py-2
-                    pr-8
-                    rounded
-                    shadow
-                    leading-tight
-                    focus:outline-none
-                    focus:shadow-outline
-                  "
+                  class="dropdown"
                 >
                   <option>default</option>
                 </select>
@@ -482,8 +467,12 @@
       <div bind:this={editor} />
     </div>
     <div id="preview-pane" class="p-4 col-span-1">
+      {@html generateScopedStyle(activeTheme, ".slide")}
+      {#each $slides as slide, slideIndex}
+        {@html generateScopedStyle(slide.style, `.slide-${slideIndex}`)}
+      {/each}
+
       <h1 class="mb-4">Preview</h1>
-      {@html generateScopedStyle(activeTheme, "#preview")}
       <div
         id="preview-wrapper"
         bind:this={previewWrapper}
@@ -493,12 +482,12 @@
           style={getRatioStyle($settings.ratio, previewScale)}
           content={activeSlide.content}
           index={activeSlideIndex+1}
+          on:click={(e) => nextSlide()}
         />
       </div>
 
       <!-- slide preview bar -->
       <div class="relative overflow-x-auto" style="height: 8rem">
-        {@html generateScopedStyle(activeTheme, ".slide-nav")}
         {#each $slides as slide, slideIndex}
           <SlidePreview 
             style={getRatioStyle($settings.ratio, 0.2) + `; top: 2rem; left: ${slideIndex*10}rem; transform-origin: left top;`}
@@ -525,5 +514,14 @@
 
   .btn-icon {
     @apply flex flex-row;
+  }
+
+  .dropdown {
+    @apply
+        block appearance-none w-full bg-white
+        border border-gray-400 hover:border-gray-500
+        px-4 py-2 pr-8
+        rounded shadow leading-tight
+        focus:outline-none focus:shadow-outline;
   }
 </style>

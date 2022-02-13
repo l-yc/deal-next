@@ -14,8 +14,7 @@
 </script>
 
 <div
-  id="preview"
-  class="slide {index === 1 ? 'first' : ''} {isNav ? 'slide-nav' : ''}"
+  class="slide slide-{index} {isNav ? 'slide-nav' : ''}"
   style={style}
   on:click={click}
 >
@@ -27,7 +26,7 @@
 </div>
 
 <style lang="postcss" windi:safelist>
-  #preview {
+  .slide {
     @apply border-2 border-black;
   }
 
